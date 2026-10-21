@@ -11,5 +11,8 @@ Everything is in `index.html`. Data sources:
 - Star sizes and masses: estimated from luminosity and temperature, typically within about 30% for nearby stars and rougher for distant supergiants
 - Messier distances and sizes: messier-api (MIT), based on SEDS values
 - Constellation areas: computed from the IAU boundaries
-- Planet, Moon and Sun positions and distances: astronomy-engine
+- Planet, Moon, Sun, Pluto and Jupiter's moons: positions from astronomy-engine
+- Saturn's eight main moons: Meeus chapter 46 via astronomia (MIT)
+- Dwarf planets and large asteroids: Wikipedia orbital elements, two-body orbits (shown for 1990–2060, or 1900–2150 beyond Neptune)
+- Sizes, masses, rotation, orbits, moon counts and discovery dates of Solar System bodies: Wikipedia
 - Cities and time zones: city-timezones
