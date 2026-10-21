@@ -4,4 +4,12 @@ A sky map that runs in your phone's browser. Point the phone at the sky, or turn
 
 Open it at https://marx1980.github.io/NightGlass/ and allow camera and motion access when asked.
 
-Everything is in `index.html`: star data from d3-celestial (Yale Bright Star Catalogue), city and time-zone data from city-timezones, and positions computed with astronomy-engine.
+Everything is in `index.html`. Data sources:
+
+- Star positions and names: d3-celestial (Yale Bright Star Catalogue)
+- Star distances, spectral types and luminosities: HYG Database v4.1 (CC BY-SA 4.0), built on Hipparcos parallaxes
+- Star sizes and masses: estimated from luminosity and temperature, typically within about 30% for nearby stars and rougher for distant supergiants
+- Messier distances and sizes: messier-api (MIT), based on SEDS values
+- Constellation areas: computed from the IAU boundaries
+- Planet, Moon and Sun positions and distances: astronomy-engine
+- Cities and time zones: city-timezones
