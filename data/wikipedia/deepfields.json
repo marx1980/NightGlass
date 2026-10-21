@@ -1,0 +1,6 @@
+[
+ {"id":"HDF","name":"Hubble Deep Field","ra":"12:36:49.4","dec":"+62:12:58","con":"UMa","width":"2.6′","galaxies":"About 3,000","taken":"18–28 December 1995","fact":"The first deep-field photo: Hubble stared at an empty-looking patch of sky for ten days and found it full of very young galaxies."},
+ {"id":"HUDF","name":"Hubble Ultra-Deep Field","ra":"03:32:39.0","dec":"-27:47:29.1","con":"For","width":"200″","galaxies":"About 10,000","taken":"September 2003 – January 2004","fact":"Hubble's deepest look at the early universe, in a patch of sky about a tenth of the full Moon's width."},
+ {"id":"HDFS","name":"Hubble Deep Field South","ra":"22:32:56.22","dec":"-60:33:02.69","con":"Tuc","width":"about 2.6′","galaxies":"","taken":"September–October 1998","fact":"The southern-sky counterpart to the original Hubble Deep Field."},
+ {"id":"WFDF","name":"Webb's First Deep Field","ra":"07:23:19.5","dec":"-73:27:15.6","con":"Vol","width":"2.4′","galaxies":"Thousands","taken":"Released 11 July 2022","dist":4000000000,"fact":"The James Webb Space Telescope's first full-colour image, centred on galaxy cluster SMACS 0723 (redshift 0.390). Its gravity magnifies galaxies far behind it."}
+]

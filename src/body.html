@@ -1,0 +1,121 @@
+<video id="cam" playsinline muted autoplay hidden></video>
+<canvas id="sky" aria-label="Sky map. Drag to look around, pinch to zoom, tap an object to identify it."></canvas>
+
+<header class="bar">
+  <div class="where">
+    <button id="placeBtn" aria-label="Change location"><span id="placeName">—</span></button>
+    <button id="timeBtn" aria-label="Change date and time"><span id="clock">—</span></button>
+  </div>
+  <div class="seg" role="group" aria-label="View mode">
+    <button id="modeDrag" aria-pressed="true">Drag</button>
+    <button id="modePoint" aria-pressed="false">Point</button>
+  </div>
+  <button class="icon" id="redBtn" aria-pressed="false" aria-label="Red light mode" title="Red light mode">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
+  <button class="icon" id="setBtn" aria-label="Display options" title="Display options">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+  </button>
+</header>
+
+<div class="zoom">
+  <button class="icon" id="camBtn" aria-pressed="false" aria-label="Camera view" title="Camera view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.8l1.5-2h6.4l1.5 2h2.8A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.6"/></svg></button>
+  <button class="icon pill" id="alignBtn" hidden title="Put a bright star you can see in the crosshair, then tap">Align</button>
+  <button class="icon" id="zin" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
+  <button class="icon" id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
+</div>
+
+<div class="dock">
+  <section class="card" id="card" aria-live="polite">
+    <div class="card-head">
+      <div>
+        <div class="kind" id="kind">Constellation</div>
+        <h1 class="name" id="name">—</h1>
+        <div class="alias" id="alias" hidden></div>
+      </div>
+      <button class="icon close" id="unpin" hidden aria-label="Back to crosshair">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <dl class="stats" id="statsA">
+      <div><dt id="a1l">Distance</dt><dd id="a1">—</dd></div>
+      <div><dt id="a2l">Size</dt><dd id="a2">—</dd></div>
+      <div><dt id="a3l">Mass</dt><dd id="a3">—</dd></div>
+    </dl>
+    <dl class="stats">
+      <div><dt id="s1l">Brightness</dt><dd id="s1">—</dd></div>
+      <div><dt>Altitude</dt><dd id="s2">—</dd></div>
+      <div><dt>Direction</dt><dd id="s3">—</dd></div>
+    </dl>
+    <p class="fact" id="fact"></p>
+    <p class="meta" id="meta"></p>
+  </section>
+</div>
+
+<!-- location -->
+<div class="scrim" id="locScrim" hidden>
+  <form class="sheet" id="locForm" autocomplete="off">
+    <div class="sheet-head"><h2>Location</h2><button type="button" class="icon close" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="cur" id="curPlace"></p>
+    <label class="f">Search cities<input type="text" id="fSearch" placeholder="Split, Reykjavík, Tokyo…" enterkeyhint="search"></label>
+    <ul class="results" id="results"></ul>
+    <p class="note" id="noRes" hidden>No city by that name. Try another spelling, or enter coordinates below.</p>
+    <button type="button" class="btn" id="geoBtn">Use my location</button>
+    <h3 class="sub">Or any point on Earth</h3>
+    <div class="row">
+      <label class="f">Latitude °<input type="number" id="fLat" step="any" min="-90" max="90" inputmode="decimal"></label>
+      <label class="f">Longitude °<input type="number" id="fLon" step="any" min="-180" max="180" inputmode="decimal"></label>
+    </div>
+    <p class="note">Latitude is positive north, longitude positive east. Use negative numbers for south and west, for example −33.87, 151.21 for Sydney.</p>
+    <button type="button" class="btn primary" id="coordBtn">Go to these coordinates</button>
+  </form>
+</div>
+
+<!-- time -->
+<div class="scrim" id="timeScrim" hidden>
+  <form class="sheet" id="timeForm" autocomplete="off">
+    <div class="sheet-head"><h2>Date and time</h2><button type="button" class="icon close" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="cur" id="tzNote"></p>
+    <div class="row">
+      <label class="f">Date<input type="date" id="fDate" min="1000-01-01" max="2999-12-31"></label>
+      <label class="f">Time<input type="time" id="fTime"></label>
+    </div>
+    <div class="steps" role="group" aria-label="Step time">
+      <button type="button" class="btn" data-step="-1440">−1 d</button>
+      <button type="button" class="btn" data-step="-60">−1 h</button>
+      <button type="button" class="btn" data-step="-10">−10 m</button>
+      <button type="button" class="btn" data-step="10">+10 m</button>
+      <button type="button" class="btn" data-step="60">+1 h</button>
+      <button type="button" class="btn" data-step="1440">+1 d</button>
+    </div>
+    <div class="row">
+      <button type="button" class="btn" id="liveBtn" aria-pressed="true">Now, live</button>
+      <button type="button" class="btn" id="duskBtn">Tonight at dark</button>
+    </div>
+    <div class="nightinfo">
+      <h3 class="sub">This night here</h3>
+      <p id="nightA"></p>
+      <p id="nightB"></p>
+    </div>
+  </form>
+</div>
+
+<!-- display -->
+<div class="scrim" id="viewScrim" hidden>
+  <form class="sheet" id="viewForm" autocomplete="off">
+    <div class="sheet-head"><h2>Display</h2><button type="button" class="icon close" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="checks">
+      <label><input type="checkbox" id="fLines"> Constellation lines</label>
+      <label><input type="checkbox" id="fLabels"> Labels</label>
+    </div>
+    <p class="note">The eye button in the top bar turns on red light, which keeps your eyes adjusted to the dark.</p>
+    <h3 class="sub">Point and camera view</h3>
+    <p class="note">Phone compasses are often 5–20° off. In Point mode, put a bright star or planet you can see in the crosshair and tap Align to correct it. In the camera view, pinch until the map's scale matches the picture.</p>
+    <button type="button" class="btn" id="resetCam">Reset compass correction and camera scale</button>
+    <h3 class="sub">Data</h3>
+    <p class="note" id="dataNote"></p>
+  </form>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="redlight" id="redlight" hidden></div>
