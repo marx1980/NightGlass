@@ -22,7 +22,7 @@ mkdir -p dist
   echo '<script>'; cat src/app.js; echo '</script>'
 } > dist/page.html
 {
-  echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#060a14"><style>html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style></head><body>'
+  echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#060a14"><link rel="icon" href="icons/favicon.svg" type="image/svg+xml"><link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="NightGlass"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><style>html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style></head><body>'
   cat dist/page.html
   echo '</body></html>'
 } > index.html

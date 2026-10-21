@@ -1,4 +1,4 @@
-# Nightglass
+# NightGlass
 
 A sky map that runs in your phone's browser. Point the phone at the sky, or turn on the camera view, and it names the star, planet, moon, constellation or deep-sky object in the crosshair. Works for any place on Earth and any date from the year 1000 to 2999.
 
