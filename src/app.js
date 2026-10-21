@@ -877,7 +877,7 @@ function describeDSO(o) {
   return { key: "d" + o.i, kind: type + (con ? " · " + con : ""), name: d[1] || d[0], alias: [d[1] ? d[0] : "", d[14] ? "Caldwell " + d[14] : ""].filter(Boolean).join(" · "),
     a: [["Distance", dist ? (est ? "≈" : "") + fmtLy(dist) : "unknown"], ["Size", sizeLy >= 1 ? (est ? "≈" : "") + fmtNum(sizeLy) + " ly" : ang ? fmtArc(d[5]) + " wide" : "—"], ["Viewing", viewTxt(mag)]],
     s1l: "Brightness", s1: mag != null ? "mag " + mag.toFixed(1) : "—", alt: aa.alt, az: aa.az, fact: DFACT[type] || "",
-    meta: sentence([dist && lightLeft(dist), ang && (d[5] >= 25 ? `It spans ${nf(sig(d[5] / 31, 2), 1)} times the width of the full Moon` : `It looks ${ang} across`),
+    meta: sentence([ang && (d[5] >= 25 ? `It spans ${nf(sig(d[5] / 31, 2), 1)} times the width of the full Moon` : `It looks ${ang} across`),
       d[13] ? `It is moving ${d[13] > 0 ? "away from" : "towards"} us at ${nf(Math.abs(d[13]), 0)} km/s` : "", est && "Its distance is estimated from that speed, so treat it as rough",
       gal && d[12] && `Hubble type ${d[12]}`, riseTxt(d[4])]) };
 }
@@ -922,7 +922,7 @@ function describe(o) {
       a: [["Distance", (far ? "≈" : "") + fmtLy(ly)], ["Size", R ? est(fmtSize(R)) : "—"], ["Mass", M ? est(fmtMass(M)) : "—"]],
       s1l: "Brightness", s1: "mag " + st[i * 4 + 2].toFixed(1), alt: aa.alt, az: aa.az,
       fact: (n && FACTS[n[0]]) || (st[i * 4 + 2] < 2 ? "One of the brightest stars in the sky." : ""),
-      meta: sentence([lightLeft(ly), T && `Its surface is about ${nf(sig(T - 273, 2), 0)} °C, which looks ${colorWord(T)}`, L && cap(powerTxt(L)),
+      meta: sentence([T && `Its surface is about ${nf(sig(T - 273, 2), 0)} °C, which looks ${colorWord(T)}`, L && cap(powerTxt(L)),
         vname && vmin != null && vmin - vmax > 0.1 && "Its brightness varies", riseTxt(st[i * 4 + 1]),
         far && "Distance, size and mass are rough this far out"]) };
   }
@@ -934,7 +934,7 @@ function describe(o) {
     a: [["Distance", fmtLy(mdist)], ["Size", msize >= 1 ? fmtNum(msize) + " ly" : "—"], ["Viewing", diff]],
     s1l: "Brightness", s1: "mag " + m[3], alt: aa.alt, az: aa.az,
     fact: MESSIER_FACTS[m[0]] || (m[3] <= 6 ? "Visible in binoculars from a dark site." : "Needs binoculars or a telescope and a dark sky."),
-    meta: sentence([lightLeft(mdist), amax >= 25 ? `It spans ${nf(sig(amax / 31, 2), 1)} times the width of the full Moon` : `It looks ${ang.replace(/'/g, "′")} across`,
+    meta: sentence([amax >= 25 ? `It spans ${nf(sig(amax / 31, 2), 1)} times the width of the full Moon` : `It looks ${ang.replace(/'/g, "′")} across`,
       `Best seen in ${seasonHere(season)}`, riseTxt(m[5])]) };
 }
 let cardT = 0;
