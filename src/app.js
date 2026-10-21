@@ -260,7 +260,7 @@ function skyColor() {
 }
 
 function draw() {
-  if (V.mode === "drag") setDragCam();
+  if (V.mode === "drag" || !gotOri) setDragCam();
   setScale();
   cands = [];
   const sky = skyColor();
@@ -996,7 +996,7 @@ cv.addEventListener("pointermove", (e) => {
     return;
   }
   if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) moved = true;
-  if (V.mode === "drag" && moved) {
+  if ((V.mode === "drag" || !gotOri) && moved) {
     const dpp = V.fov / Math.min(W, H);
     V.az = (V.az - dx * dpp + 360) % 360;
     V.alt = Math.max(-89, Math.min(89, V.alt + dy * dpp));
@@ -1059,21 +1059,31 @@ function onOri(e) {
     dirty = true;
   }
 }
-async function enterPoint() {
-  try {
-    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
-      const r = await DeviceOrientationEvent.requestPermission();
-      if (r !== "granted") throw new Error("denied");
-    }
-  } catch (err) { return failPoint("Motion access was refused, so Point mode can't follow your phone. Drag mode still works."); }
+// Motion permission is asked at most once per visit. iOS needs a tap for it; other phones grant it silently.
+let motionOK = null;
+const MOTION_NEEDS_TAP = !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function");
+async function askMotion() {
+  if (motionOK !== null) return motionOK;
+  if (MOTION_NEEDS_TAP) {
+    try { motionOK = (await DeviceOrientationEvent.requestPermission()) === "granted"; } catch (e) { motionOK = false; }
+  } else motionOK = !!window.DeviceOrientationEvent;
+  return motionOK;
+}
+async function enterPoint(explicit = true) {
+  const ok = await askMotion();
+  if (!ok) return explicit ? failPoint("Motion access was refused, so Point mode can't follow your phone. Drag mode still works. To allow it, close this tab, open the site again and choose Allow.") : setMode("drag");
   if (!oriListening) {
     const ev = "ondeviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation";
     window.addEventListener(ev, onOri); oriListening = true;
   }
   setMode("point");
   clearTimeout(oriTimer);
-  oriTimer = setTimeout(() => { if (!gotOri) failPoint("No compass or tilt data reached the app here. Point mode needs a phone and the app opened directly in its browser over https."); }, 2500);
-  try { if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
+  oriTimer = setTimeout(() => {
+    if (gotOri) return;
+    if (explicit) failPoint("No compass or tilt data reached the app here. Point mode needs a phone and the app opened directly in its browser over https.");
+    else setMode("drag");
+  }, 2500);
+  try { if (navigator.wakeLock && !wakeLock) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
 }
 function failPoint(msg) {
   setMode("drag"); toast(msg);
@@ -1105,33 +1115,46 @@ function autoCamFov() {
   const visW = tw * W / (s * dw), visH = th * H / (s * dh);
   return 2 * Math.atan(W <= H ? visW : visH) / D;
 }
+let camRelease = null;
+const camLive = () => camStream && camStream.getVideoTracks().some((t) => t.readyState === "live");
+function releaseCam() {
+  clearTimeout(camRelease); camRelease = null;
+  if (camStream) camStream.getTracks().forEach((t) => t.stop());
+  camStream = null;
+  if (!camOn) $("cam").srcObject = null;
+}
 async function startCam() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return toast(CAM_MSG);
-  await enterPoint(); // asks for motion access while the tap still counts
+  await enterPoint(); // asks for motion access while the tap still counts (only the first time)
   if (V.mode !== "point") return;
-  try {
-    camStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
-  } catch (e) {
-    return toast(e && e.name === "NotAllowedError" ? "Camera access was refused. Allow the camera for this site in your browser settings, then tap the camera button again." : CAM_MSG);
+  clearTimeout(camRelease); camRelease = null;
+  const first = !camLive();
+  if (first) {
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
+    } catch (e) {
+      return toast(e && e.name === "NotAllowedError" ? "Camera access was refused. Allow the camera for this site in your browser settings, then tap the camera button again." : CAM_MSG);
+    }
   }
-  if (V.mode !== "point") { camStream.getTracks().forEach((t) => t.stop()); camStream = null; return; }
+  if (V.mode !== "point") { releaseCam(); return; }
   const v = $("cam");
   v.onloadedmetadata = () => { if (camOn && S.camFov == null) { V.fov = autoCamFov(); dirty = true; } };
-  v.srcObject = camStream; v.hidden = false;
+  if (v.srcObject !== camStream) v.srcObject = camStream;
+  v.hidden = false;
   try { await v.play(); } catch (e) {}
   camOn = true; fovBeforeCam = V.fov; V.fov = S.camFov || 40;
   if (S.camFov == null && v.videoWidth) V.fov = autoCamFov();
   $("camBtn").setAttribute("aria-pressed", true);
-  toast("Hold the phone up to the sky. If the labels sit beside the real stars, put a bright one you can see in the crosshair and tap Align. Pinch to match the map's scale to the camera.");
+  if (first) toast("Hold the phone up to the sky. If the labels sit beside the real stars, put a bright one you can see in the crosshair and tap Align. Pinch to match the map's scale to the camera.");
   dirty = true;
 }
 function stopCam() {
-  if (camStream) camStream.getTracks().forEach((t) => t.stop());
-  camStream = null;
-  const v = $("cam"); v.srcObject = null; v.hidden = true;
+  const v = $("cam"); v.hidden = true; try { v.pause(); } catch (e) {}
   if (camOn) V.fov = fovBeforeCam;
   camOn = false; $("camBtn").setAttribute("aria-pressed", false); dirty = true;
+  clearTimeout(camRelease); camRelease = setTimeout(releaseCam, 120000);
 }
+document.addEventListener("visibilitychange", () => { if (document.hidden && !camOn) releaseCam(); });
 $("camBtn").onclick = () => (camOn ? stopCam() : startCam());
 $("alignBtn").onclick = () => {
   // the user has a real bright object in the crosshair: snap the compass so the map agrees
@@ -1307,6 +1330,19 @@ function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = fals
 /* ---------- loop ---------- */
 window.addEventListener("resize", resize);
 resize(); applyRed(); updateSky(); fmtClock();
+if (window.DeviceOrientationEvent && window.matchMedia && matchMedia("(pointer: coarse)").matches) {
+  if (MOTION_NEEDS_TAP) {
+    // iOS: show Point as chosen, and ask for motion access on the first tap anywhere
+    setMode("point");
+    toast("Tap anywhere to let the map follow your phone.");
+    const first = (e) => {
+      document.removeEventListener("click", first, true); document.removeEventListener("touchend", first, true);
+      if (e.target.closest && e.target.closest("#modeDrag")) return;
+      if (V.mode === "point" && motionOK === null) enterPoint(true);
+    };
+    document.addEventListener("click", first, true); document.addEventListener("touchend", first, true);
+  } else enterPoint(false);
+}
 setInterval(() => { if (T === null) { updateSky(); fmtClock(); } }, 5000);
 function loop() {
   if (dirty) { dirty = false; draw(); updateCard(); }
