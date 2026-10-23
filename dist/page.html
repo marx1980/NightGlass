@@ -86,6 +86,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--amber); out
 .name { font-family: var(--display); font-size: 32px; line-height: 1.05; font-weight: 400; margin: 2px 0 0; text-wrap: balance; overflow-wrap: anywhere; }
 .alias { font-family: var(--display); font-style: italic; color: var(--dim); font-size: 17px; }
 .close { width: 32px; height: 32px; }
+.card-head .close + .close { margin-left: -4px; }
+.showcard { position: fixed; z-index: 5; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: 44px; height: 44px; background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.dock[hidden] { display: none !important; }
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; border-top: 1px solid var(--hair); padding-top: 10px; }
 .stats div { min-width: 0; }
 .stats dt { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
@@ -159,6 +162,21 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
 /* red-light mode keeps dark adaptation: multiply everything to the red channel */
 .redlight { position: fixed; inset: 0; z-index: 50; pointer-events: none; background: #ff2a12; mix-blend-mode: multiply; }
 
+@media (orientation: landscape) and (max-height: 560px) {
+  .card { max-width: 340px; margin: 0; padding: 10px 12px 11px; gap: 6px; border-radius: 14px; }
+  .kind { font-size: 10.5px; }
+  .name { font-size: 22px; }
+  .alias { font-size: 14px; }
+  .stats { gap: 4px 8px; padding-top: 6px; }
+  .stats dt { font-size: 9.5px; }
+  .stats dd { font-size: 14px; margin-top: 1px; }
+  .fact, .meta { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .fact { font-size: 13.5px; line-height: 1.35; }
+  .meta { font-size: 12.5px; line-height: 1.35; }
+  .card.min .fact, .card.min .meta { display: none; }
+  .close { width: 28px; height: 28px; }
+  .zoom { top: 30%; }
+}
 @media (max-width: 380px) {
   .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .seg button { padding: 6px 8px; font-size: 12px; }
@@ -193,6 +211,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
   <button class="icon" id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
 </div>
 
+<button class="icon showcard" id="showCard" hidden aria-label="Show object card">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+</button>
 <div class="dock">
   <section class="card" id="card" aria-live="polite">
     <div class="card-head">
@@ -201,6 +222,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
         <h1 class="name" id="name">—</h1>
         <div class="alias" id="alias" hidden></div>
       </div>
+      <button class="icon close" id="hideCard" aria-label="Hide object card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
       <button class="icon close" id="unpin" hidden aria-label="Back to crosshair">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
@@ -275,6 +299,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
     <div class="checks">
       <label><input type="checkbox" id="fLines"> Constellation lines</label>
       <label><input type="checkbox" id="fLabels"> Labels</label>
+      <label><input type="checkbox" id="fDetails"> Object details</label>
     </div>
     <p class="note">The eye button in the top bar turns on red light, which keeps your eyes adjusted to the dark.</p>
     <h3 class="sub">Point and camera view</h3>
@@ -284,7 +309,7 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
     <p class="note" id="dataNote"></p>
     <div class="brand">
       <svg viewBox="0 0 220 220" aria-hidden="true"><circle cx="92" cy="92" r="68" fill="#121B36" stroke="#F1B45C" stroke-width="10"></circle><line x1="141" y1="141" x2="196" y2="196" stroke="#F1B45C" stroke-width="18" stroke-linecap="round"></line><polyline points="52,118 72,82 104,66 128,98 116,132" fill="none" stroke="#8FA6D8" stroke-width="3" stroke-linejoin="round"></polyline><circle cx="52" cy="118" r="5" fill="#EEF1F8"></circle><circle cx="72" cy="82" r="4.5" fill="#EEF1F8"></circle><circle cx="128" cy="98" r="5" fill="#EEF1F8"></circle><circle cx="116" cy="132" r="4" fill="#EEF1F8"></circle><path d="M104 50 L108 62 L120 66 L108 70 L104 82 L100 70 L88 66 L100 62 Z" fill="#FFFFFF"></path></svg>
-      <div><div class="brand-name">Night<i>Glass</i></div><p>Point your phone at the sky to name what you see.</p></div>
+      <div class="brand-name">Night<i>Glass</i></div>
     </div>
   </form>
 </div>
@@ -972,7 +997,7 @@ function tzFor(lat, lon) {
 /* ---------- settings ---------- */
 const S = Object.assign({ lines: true, labels: true, red: false, camFov: null }, load());
 function load() { try { return JSON.parse(localStorage.getItem("nightglass") || "{}"); } catch (e) { return {}; } }
-function save() { try { localStorage.setItem("nightglass", JSON.stringify({ lat: S.lat, lon: S.lon, place: S.place, country: S.country, tz: S.tz, lines: S.lines, labels: S.labels, red: S.red, camFov: S.camFov, cardMin: !!S.cardMin })); } catch (e) {} }
+function save() { try { localStorage.setItem("nightglass", JSON.stringify({ lat: S.lat, lon: S.lon, place: S.place, country: S.country, tz: S.tz, lines: S.lines, labels: S.labels, red: S.red, camFov: S.camFov, cardMin: !!S.cardMin, cardHidden: !!S.cardHidden })); } catch (e) {} }
 function setCity(c) { S.lat = c[3]; S.lon = c[4]; S.place = c[0]; S.country = c[1]; S.tz = TZS[c[5]]; }
 if (!(typeof S.lat === "number" && isFinite(S.lat) && typeof S.lon === "number" && isFinite(S.lon))) {
   // first visit: start in the biggest city of the browser's own time zone
@@ -1865,8 +1890,13 @@ function tap(x, y) {
 $("unpin").onclick = () => { pinned = null; dirty = true; updateCard(true); };
 const cardHead = document.querySelector(".card-head");
 cardHead.setAttribute("title", "Tap to show more or less");
-cardHead.onclick = (e) => { if (e.target.closest("#unpin")) return; S.cardMin = !S.cardMin; $("card").classList.toggle("min", S.cardMin); save(); };
+function setDetails(on) { S.cardMin = !on; $("card").classList.toggle("min", S.cardMin); save(); }
+cardHead.onclick = (e) => { if (e.target.closest("button")) return; setDetails(!!S.cardMin); };
 $("card").classList.toggle("min", !!S.cardMin);
+function setCardHidden(h) { S.cardHidden = h; document.querySelector(".dock").hidden = h; $("showCard").hidden = !h; save(); }
+$("hideCard").onclick = () => setCardHidden(true);
+$("showCard").onclick = () => setCardHidden(false);
+setCardHidden(!!S.cardHidden);
 
 /* ---------- point mode: device orientation ---------- */
 let oriListening = false, gotOri = false, iosOff = null, oriTimer = null, wakeLock = null;
@@ -2152,7 +2182,8 @@ $("duskBtn").onclick = () => {
 $("timeBtn").onclick = () => { fillTime(); openS("timeScrim"); };
 
 /* display */
-$("setBtn").onclick = () => { $("fLines").checked = S.lines; $("fLabels").checked = S.labels; openS("viewScrim"); };
+$("setBtn").onclick = () => { $("fLines").checked = S.lines; $("fLabels").checked = S.labels; $("fDetails").checked = !S.cardMin; openS("viewScrim"); };
+$("fDetails").onchange = () => setDetails($("fDetails").checked);
 $("fLines").onchange = () => { S.lines = $("fLines").checked; save(); dirty = true; };
 $("fLabels").onchange = () => { S.labels = $("fLabels").checked; save(); dirty = true; };
 

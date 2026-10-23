@@ -25,6 +25,9 @@
   <button class="icon" id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
 </div>
 
+<button class="icon showcard" id="showCard" hidden aria-label="Show object card">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+</button>
 <div class="dock">
   <section class="card" id="card" aria-live="polite">
     <div class="card-head">
@@ -33,6 +36,9 @@
         <h1 class="name" id="name">—</h1>
         <div class="alias" id="alias" hidden></div>
       </div>
+      <button class="icon close" id="hideCard" aria-label="Hide object card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
       <button class="icon close" id="unpin" hidden aria-label="Back to crosshair">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
@@ -107,6 +113,7 @@
     <div class="checks">
       <label><input type="checkbox" id="fLines"> Constellation lines</label>
       <label><input type="checkbox" id="fLabels"> Labels</label>
+      <label><input type="checkbox" id="fDetails"> Object details</label>
     </div>
     <p class="note">The eye button in the top bar turns on red light, which keeps your eyes adjusted to the dark.</p>
     <h3 class="sub">Point and camera view</h3>
@@ -116,7 +123,7 @@
     <p class="note" id="dataNote"></p>
     <div class="brand">
       <svg viewBox="0 0 220 220" aria-hidden="true"><circle cx="92" cy="92" r="68" fill="#121B36" stroke="#F1B45C" stroke-width="10"></circle><line x1="141" y1="141" x2="196" y2="196" stroke="#F1B45C" stroke-width="18" stroke-linecap="round"></line><polyline points="52,118 72,82 104,66 128,98 116,132" fill="none" stroke="#8FA6D8" stroke-width="3" stroke-linejoin="round"></polyline><circle cx="52" cy="118" r="5" fill="#EEF1F8"></circle><circle cx="72" cy="82" r="4.5" fill="#EEF1F8"></circle><circle cx="128" cy="98" r="5" fill="#EEF1F8"></circle><circle cx="116" cy="132" r="4" fill="#EEF1F8"></circle><path d="M104 50 L108 62 L120 66 L108 70 L104 82 L100 70 L88 66 L100 62 Z" fill="#FFFFFF"></path></svg>
-      <div><div class="brand-name">Night<i>Glass</i></div><p>Point your phone at the sky to name what you see.</p></div>
+      <div class="brand-name">Night<i>Glass</i></div>
     </div>
   </form>
 </div>

@@ -135,7 +135,7 @@ function tzFor(lat, lon) {
 /* ---------- settings ---------- */
 const S = Object.assign({ lines: true, labels: true, red: false, camFov: null }, load());
 function load() { try { return JSON.parse(localStorage.getItem("nightglass") || "{}"); } catch (e) { return {}; } }
-function save() { try { localStorage.setItem("nightglass", JSON.stringify({ lat: S.lat, lon: S.lon, place: S.place, country: S.country, tz: S.tz, lines: S.lines, labels: S.labels, red: S.red, camFov: S.camFov, cardMin: !!S.cardMin })); } catch (e) {} }
+function save() { try { localStorage.setItem("nightglass", JSON.stringify({ lat: S.lat, lon: S.lon, place: S.place, country: S.country, tz: S.tz, lines: S.lines, labels: S.labels, red: S.red, camFov: S.camFov, cardMin: !!S.cardMin, cardHidden: !!S.cardHidden })); } catch (e) {} }
 function setCity(c) { S.lat = c[3]; S.lon = c[4]; S.place = c[0]; S.country = c[1]; S.tz = TZS[c[5]]; }
 if (!(typeof S.lat === "number" && isFinite(S.lat) && typeof S.lon === "number" && isFinite(S.lon))) {
   // first visit: start in the biggest city of the browser's own time zone
@@ -1028,8 +1028,13 @@ function tap(x, y) {
 $("unpin").onclick = () => { pinned = null; dirty = true; updateCard(true); };
 const cardHead = document.querySelector(".card-head");
 cardHead.setAttribute("title", "Tap to show more or less");
-cardHead.onclick = (e) => { if (e.target.closest("#unpin")) return; S.cardMin = !S.cardMin; $("card").classList.toggle("min", S.cardMin); save(); };
+function setDetails(on) { S.cardMin = !on; $("card").classList.toggle("min", S.cardMin); save(); }
+cardHead.onclick = (e) => { if (e.target.closest("button")) return; setDetails(!!S.cardMin); };
 $("card").classList.toggle("min", !!S.cardMin);
+function setCardHidden(h) { S.cardHidden = h; document.querySelector(".dock").hidden = h; $("showCard").hidden = !h; save(); }
+$("hideCard").onclick = () => setCardHidden(true);
+$("showCard").onclick = () => setCardHidden(false);
+setCardHidden(!!S.cardHidden);
 
 /* ---------- point mode: device orientation ---------- */
 let oriListening = false, gotOri = false, iosOff = null, oriTimer = null, wakeLock = null;
@@ -1315,7 +1320,8 @@ $("duskBtn").onclick = () => {
 $("timeBtn").onclick = () => { fillTime(); openS("timeScrim"); };
 
 /* display */
-$("setBtn").onclick = () => { $("fLines").checked = S.lines; $("fLabels").checked = S.labels; openS("viewScrim"); };
+$("setBtn").onclick = () => { $("fLines").checked = S.lines; $("fLabels").checked = S.labels; $("fDetails").checked = !S.cardMin; openS("viewScrim"); };
+$("fDetails").onchange = () => setDetails($("fDetails").checked);
 $("fLines").onchange = () => { S.lines = $("fLines").checked; save(); dirty = true; };
 $("fLabels").onchange = () => { S.labels = $("fLabels").checked; save(); dirty = true; };
 
