@@ -31,28 +31,35 @@
 <div class="dock">
   <section class="card" id="card" aria-live="polite">
     <div class="card-head">
-      <div>
+      <div class="card-title">
         <div class="kind" id="kind">Constellation</div>
         <h1 class="name" id="name">—</h1>
         <div class="alias" id="alias" hidden></div>
       </div>
-      <button class="icon close" id="hideCard" aria-label="Hide object card">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-      <button class="icon close" id="unpin" hidden aria-label="Back to crosshair">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
+      <div class="card-btns">
+        <button class="icon close" id="unpin" hidden aria-label="Back to crosshair">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+        </button>
+        <button class="icon close" id="sizeCard" aria-label="Show name only">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <button class="icon close" id="hideCard" aria-label="Hide object card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
     </div>
-    <dl class="stats" id="statsA">
-      <div><dt id="a1l">Distance</dt><dd id="a1">—</dd></div>
-      <div><dt id="a2l">Size</dt><dd id="a2">—</dd></div>
-      <div><dt id="a3l">Mass</dt><dd id="a3">—</dd></div>
-    </dl>
-    <dl class="stats">
-      <div><dt id="s1l">Brightness</dt><dd id="s1">—</dd></div>
-      <div><dt>Altitude</dt><dd id="s2">—</dd></div>
-      <div><dt>Direction</dt><dd id="s3">—</dd></div>
-    </dl>
+    <div class="statwrap">
+      <dl class="stats" id="statsA">
+        <div><dt id="a1l">Distance</dt><dd id="a1">—</dd></div>
+        <div><dt id="a2l">Size</dt><dd id="a2">—</dd></div>
+        <div><dt id="a3l">Mass</dt><dd id="a3">—</dd></div>
+      </dl>
+      <dl class="stats">
+        <div><dt id="s1l">Brightness</dt><dd id="s1">—</dd></div>
+        <div><dt>Altitude</dt><dd id="s2">—</dd></div>
+        <div><dt>Direction</dt><dd id="s3">—</dd></div>
+      </dl>
+    </div>
     <p class="fact" id="fact"></p>
     <p class="meta" id="meta"></p>
   </section>
@@ -113,7 +120,13 @@
     <div class="checks">
       <label><input type="checkbox" id="fLines"> Constellation lines</label>
       <label><input type="checkbox" id="fLabels"> Labels</label>
-      <label><input type="checkbox" id="fDetails"> Object details</label>
+    </div>
+    <div class="f">Object card
+      <div class="seg seg-wide" id="cardModeSeg">
+        <button type="button" data-mode="full">Full</button>
+        <button type="button" data-mode="name">Name</button>
+        <button type="button" data-mode="off">Off</button>
+      </div>
     </div>
     <p class="note">The eye button in the top bar turns on red light, which keeps your eyes adjusted to the dark.</p>
     <h3 class="sub">Point and camera view</h3>
