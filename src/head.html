@@ -165,7 +165,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
 .timehead output { color: var(--ink); font-size: 15px; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
 .note { margin: 0; color: var(--dim); font-size: 13.5px; line-height: 1.45; }
 
-.guide { position: fixed; z-index: 5; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 64px); max-width: calc(100% - 32px); box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 14px; border-radius: 999px; background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(157,255,176,.55); color: #9dffb0; font: 600 14px var(--ui); }
+.guide { position: fixed; z-index: 5; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 74px); white-space: nowrap; max-width: calc(100% - 32px); box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 14px; border-radius: 999px; background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(157,255,176,.55); color: #9dffb0; font: 600 14px var(--ui); }
+.red .guide { border-color: rgba(255,90,60,.7); color: #ff5a3c; }
+.guide span { overflow: hidden; text-overflow: ellipsis; }
 .guide[hidden] { display: none; }
 
 .toast {

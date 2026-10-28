@@ -1202,7 +1202,7 @@ $("resetCam").onclick = () => {
 };
 
 /* ---------- red light ---------- */
-function applyRed() { $("redlight").hidden = !S.red; $("redBtn").setAttribute("aria-pressed", S.red); }
+function applyRed() { document.documentElement.classList.toggle("red", !!S.red); dirty = true; $("redlight").hidden = !S.red; $("redBtn").setAttribute("aria-pressed", S.red); }
 $("redBtn").onclick = () => { S.red = !S.red; applyRed(); save(); };
 
 /* ---------- sheets ---------- */
@@ -1216,7 +1216,7 @@ const fine = window.matchMedia && matchMedia("(pointer: fine)").matches;
 
 
 /* ---------- find an object and guide the user to it ---------- */
-const GREEN = "#9dffb0";
+const guideCol = () => (S.red ? "#ff5a3c" : "#9dffb0"), guideGlow = () => (S.red ? "rgba(255,90,60,0.8)" : "rgba(157,255,176,0.7)");
 let goal = null; // { t, i } like pinned; t "c" is a constellation
 const segCon = new Int16Array(NL / 2).fill(-1);
 (function () {
@@ -1263,13 +1263,15 @@ function drawGuide() {
   if (!h) { $("guideTxt").textContent = goalName(goal) + " isn't shown right now"; gl.hidden = false; return; }
   const aa = altaz(h), name = goalName(goal);
   const sep = Math.acos(Math.max(-1, Math.min(1, dot(norm(h), F)))) / D;
-  const txt = `Finding ${name} · ${sep < 1 ? sep.toFixed(1) : Math.round(sep)}° away` + (aa.alt < 0 ? " · below the horizon" : "");
+  const txt = `${name} · ${sep < 1 ? sep.toFixed(1) : Math.round(sep)}°` + (aa.alt < 0 ? " · below horizon" : "");
   if ($("guideTxt").textContent !== txt) $("guideTxt").textContent = txt;
   gl.hidden = false;
   ctx.save();
   ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const GREEN = guideCol(), glow = guideGlow(), pulse = S.red ? 0.75 + 0.25 * Math.sin(performance.now() / 350) : 1;
+  dirty = true; // keep animating the pulse while guiding
   if (goal.t === "c") {
-    ctx.strokeStyle = GREEN; ctx.lineWidth = 3.4; ctx.shadowColor = "rgba(157,255,176,0.7)"; ctx.shadowBlur = 6;
+    ctx.strokeStyle = GREEN; ctx.lineWidth = (S.red ? 4.2 : 3.4) * pulse; ctx.shadowColor = glow; ctx.shadowBlur = 6;
     ctx.beginPath();
     for (let k = 0; k < NL / 2; k++) {
       if (segCon[k] !== goal.i) continue;
@@ -1284,8 +1286,8 @@ function drawGuide() {
   proj(h[0], h[1], h[2]);
   if (onScreen(0) && P.c > 0) {
     if (goal.t !== "c") {
-      ctx.strokeStyle = GREEN; ctx.lineWidth = 2.4; ctx.shadowColor = "rgba(157,255,176,0.7)"; ctx.shadowBlur = 6;
-      ctx.beginPath(); ctx.arc(P.x, P.y, 17, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = GREEN; ctx.lineWidth = (S.red ? 3.2 : 2.4) * pulse; ctx.shadowColor = glow; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(P.x, P.y, S.red ? 19 : 17, 0, Math.PI * 2); ctx.stroke();
     }
   } else {
     // arrow toward the object, relative to the way the phone is facing
@@ -1293,7 +1295,7 @@ function drawGuide() {
     const ang = Math.atan2(-b, a), rad = Math.max(40, Math.min(W, H) * 0.32);
     const ax = cx + Math.cos(ang) * rad, ay = cy + Math.sin(ang) * rad;
     ctx.translate(ax, ay); ctx.rotate(ang);
-    ctx.fillStyle = GREEN; ctx.strokeStyle = "rgba(6,10,20,0.8)"; ctx.lineWidth = 2; ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 5;
+    ctx.fillStyle = GREEN; ctx.strokeStyle = "rgba(6,10,20,0.8)"; ctx.lineWidth = S.red ? 3 : 2; ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 5;
     ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(-4, -17); ctx.lineTo(-4, -6); ctx.lineTo(-24, -6); ctx.lineTo(-24, 6); ctx.lineTo(-4, 6); ctx.lineTo(-4, 17); ctx.closePath();
     ctx.stroke(); ctx.fill();
   }
