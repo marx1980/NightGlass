@@ -166,6 +166,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
 .timehead output { color: var(--ink); font-size: 15px; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
 .note { margin: 0; color: var(--dim); font-size: 13.5px; line-height: 1.45; }
 
+.guide { position: fixed; z-index: 5; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 64px); max-width: calc(100% - 32px); box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 14px; border-radius: 999px; background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(157,255,176,.55); color: #9dffb0; font: 600 14px var(--ui); }
+.guide[hidden] { display: none; }
+
 .toast {
   position: fixed; z-index: 30; left: 50%; transform: translateX(-50%);
   top: calc(env(safe-area-inset-top, 0px) + 70px); width: min(440px, calc(100% - 32px)); box-sizing: border-box;
@@ -212,6 +215,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
     <button id="modePoint" aria-pressed="false">Point</button>
     <button id="modeDrag" aria-pressed="true">Drag</button>
   </div>
+  <button class="icon" id="findBtn" aria-label="Find an object" title="Find an object">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></svg>
+  </button>
   <button class="icon" id="redBtn" aria-pressed="false" aria-label="Red light mode" title="Red light mode">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
   </button>
@@ -239,6 +245,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
         <div class="alias" id="alias" hidden></div>
       </div>
       <div class="card-btns">
+        <button class="icon close" id="goBtn" hidden aria-label="Guide me to this object" title="Guide me to this object">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 17-7-4-7 4z"/></svg>
+        </button>
         <button class="icon close" id="unpin" hidden aria-label="Back to crosshair">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
         </button>
@@ -265,6 +274,19 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
     <p class="fact" id="fact"></p>
     <p class="meta" id="meta"></p>
   </section>
+</div>
+
+<div class="guide" id="guide" hidden><span id="guideTxt"></span><button type="button" class="icon close" id="guideStop" aria-label="Stop guiding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+
+<!-- find -->
+<div class="scrim" id="findScrim" hidden>
+  <form class="sheet" id="findForm" autocomplete="off">
+    <div class="sheet-head"><h2>Find</h2><button type="button" class="icon close" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <label class="f">Search stars, planets, constellations, deep-sky objects<input type="text" id="findInput" placeholder="Vega, Orion, M31, Jupiter…" enterkeyhint="search"></label>
+    <ul class="results" id="findResults"></ul>
+    <p class="note" id="noFind" hidden>Nothing by that name.</p>
+    <p class="note">Then move your phone to follow the green arrow. Objects get a green ring; constellations are drawn with bold green lines.</p>
+  </form>
 </div>
 
 <!-- location -->
@@ -1305,6 +1327,7 @@ function draw() {
 
   ctx.shadowBlur = 0;
   drawGround(sky);
+  drawGuide();
   drawReticle();
 }
 
@@ -1784,9 +1807,10 @@ function describeField(o) {
 
 let lastKey = "";
 function describe(o) {
-  if (!o) {
-    const aa = altaz(F), c = conSymAt(F), ci = c && CINFO[c.symbol];
-    const hint = aa.alt < 0 ? "The crosshair is below the horizon." : sunAlt > -6 ? "The Sun is up, so stars aren't visible right now. Tap the clock and choose Tonight at dark." : "";
+  if (!o || o.t === "c") {
+    const cv3 = o && [cH[o.i * 3], cH[o.i * 3 + 1], cH[o.i * 3 + 2]];
+    const aa = altaz(o ? cv3 : F), c = o ? { symbol: CONS[o.i][0], name: CONS[o.i][1] } : conSymAt(F), ci = c && CINFO[c.symbol];
+    const hint = aa.alt < 0 ? (o ? "Its centre is below the horizon." : "The crosshair is below the horizon.") : sunAlt > -6 ? "The Sun is up, so stars aren't visible right now. Tap the clock and choose Tonight at dark." : "";
     if (!ci) return { key: "c?", kind: "Sky", name: "—", alias: "", a: [], s1l: "Brightness", s1: "—", alt: aa.alt, az: aa.az, fact: hint, meta: "" };
     const [area, raC, dmin, dmax, count, bi, rank] = ci, bn = bi >= 0 ? starName(bi) : "—";
     return { key: "c" + c.symbol, kind: "Constellation" + (ZODIAC.has(c.symbol) ? " · Zodiac" : ""), name: c.name, alias: MEANING[c.symbol] || "",
@@ -1844,6 +1868,7 @@ function updateCard(force) {
   $("fact").textContent = d.fact; $("fact").hidden = !d.fact;
   $("meta").textContent = d.meta; $("meta").hidden = !d.meta;
   $("unpin").hidden = !pinned;
+  $("goBtn").hidden = !o || (goal && goal.t === o.t && goal.i === o.i);
 }
 
 /* ---------- clock & place ---------- */
@@ -2101,6 +2126,136 @@ document.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => clos
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelectorAll(".scrim").forEach((s) => (s.hidden = true)); });
 document.querySelectorAll(".sheet").forEach((f) => f.addEventListener("submit", (e) => e.preventDefault()));
 const fine = window.matchMedia && matchMedia("(pointer: fine)").matches;
+
+
+/* ---------- find an object and guide the user to it ---------- */
+const GREEN = "#9dffb0";
+let goal = null; // { t, i } like pinned; t "c" is a constellation
+const segCon = new Int16Array(NL / 2).fill(-1);
+(function () {
+  const idx = {}; CONS.forEach((c, i) => (idx[c[0]] = i));
+  for (let k = 0; k < NL / 2; k++) {
+    const a = k * 6, x = lEq[a] + lEq[a + 3], y = lEq[a + 1] + lEq[a + 4], z = lEq[a + 2] + lEq[a + 5];
+    try {
+      const c = A.Constellation(((Math.atan2(y, x) / D / 15) + 24) % 24, Math.atan2(z, Math.hypot(x, y)) / D);
+      if (c && idx[c.symbol] != null) segCon[k] = idx[c.symbol];
+    } catch (e) { /* leave unassigned */ }
+  }
+})();
+function goalH(g) {
+  const v = (a, i) => [a[i * 3], a[i * 3 + 1], a[i * 3 + 2]];
+  switch (g.t) {
+    case "c": return v(cH, g.i);
+    case "s": return v(sH, g.i);
+    case "m": return v(mH, g.i);
+    case "d": return v(dH, g.i);
+    case "f": return v(fH, g.i);
+    case "b": return bod[g.i].h;
+    case "n": return MOONS[g.i].h;
+    case "k": return minors[g.i].h;
+  }
+  return null;
+}
+function goalName(g) {
+  switch (g.t) {
+    case "c": return CONS[g.i][1];
+    case "s": return starName(g.i);
+    case "m": return MES[g.i][1] || MES[g.i][0];
+    case "d": return DS[g.i][1] || DS[g.i][0];
+    case "f": return DF[g.i].name;
+    case "b": return bod[g.i].n;
+    case "n": return MOONS[g.i].n;
+    case "k": return minors[g.i].el[0];
+  }
+  return "";
+}
+function drawGuide() {
+  const gl = $("guide");
+  if (!goal) { if (!gl.hidden) gl.hidden = true; return; }
+  const h = goalH(goal);
+  if (!h) { $("guideTxt").textContent = goalName(goal) + " isn't shown right now"; gl.hidden = false; return; }
+  const aa = altaz(h), name = goalName(goal);
+  const sep = Math.acos(Math.max(-1, Math.min(1, dot(norm(h), F)))) / D;
+  const txt = `Finding ${name} · ${sep < 1 ? sep.toFixed(1) : Math.round(sep)}° away` + (aa.alt < 0 ? " · below the horizon" : "");
+  if ($("guideTxt").textContent !== txt) $("guideTxt").textContent = txt;
+  gl.hidden = false;
+  ctx.save();
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  if (goal.t === "c") {
+    ctx.strokeStyle = GREEN; ctx.lineWidth = 3.4; ctx.shadowColor = "rgba(157,255,176,0.7)"; ctx.shadowBlur = 6;
+    ctx.beginPath();
+    for (let k = 0; k < NL / 2; k++) {
+      if (segCon[k] !== goal.i) continue;
+      const j = k * 6;
+      proj(lH[j], lH[j + 1], lH[j + 2]); if (P.c < (camOn ? 0.12 : 0.05)) continue;
+      const x1 = P.x, y1 = P.y;
+      proj(lH[j + 3], lH[j + 4], lH[j + 5]); if (P.c < (camOn ? 0.12 : 0.05)) continue;
+      ctx.moveTo(x1, y1); ctx.lineTo(P.x, P.y);
+    }
+    ctx.stroke();
+  }
+  proj(h[0], h[1], h[2]);
+  if (onScreen(0) && P.c > 0) {
+    if (goal.t !== "c") {
+      ctx.strokeStyle = GREEN; ctx.lineWidth = 2.4; ctx.shadowColor = "rgba(157,255,176,0.7)"; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(P.x, P.y, 17, 0, Math.PI * 2); ctx.stroke();
+    }
+  } else {
+    // arrow toward the object, relative to the way the phone is facing
+    const a = h[0] * R[0] + h[1] * R[1] + h[2] * R[2], b = h[0] * U[0] + h[1] * U[1] + h[2] * U[2];
+    const ang = Math.atan2(-b, a), rad = Math.max(40, Math.min(W, H) * 0.32);
+    const ax = cx + Math.cos(ang) * rad, ay = cy + Math.sin(ang) * rad;
+    ctx.translate(ax, ay); ctx.rotate(ang);
+    ctx.fillStyle = GREEN; ctx.strokeStyle = "rgba(6,10,20,0.8)"; ctx.lineWidth = 2; ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 5;
+    ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(-4, -17); ctx.lineTo(-4, -6); ctx.lineTo(-24, -6); ctx.lineTo(-24, 6); ctx.lineTo(-4, 6); ctx.lineTo(-4, 17); ctx.closePath();
+    ctx.stroke(); ctx.fill();
+  }
+  ctx.restore();
+}
+function setGoal(g) { goal = g; if (g) { pinned = { t: g.t, i: g.i }; } dirty = true; updateCard(true); }
+$("guideStop").onclick = () => { goal = null; dirty = true; };
+$("goBtn").onclick = () => { const o = pinned || target; if (o) setGoal({ t: o.t, i: o.i }); };
+
+/* find: search the sky by name */
+let FIND = null;
+function buildFind() {
+  const out = [], add = (name, sub, t, i, extra) => { if (name) out.push({ name, sub, t, i, k: fold(name + " " + (extra || "")) }); };
+  CONS.forEach((c, i) => add(c[1], "Constellation", "c", i, c[0]));
+  bod.forEach((b, i) => add(b.n, b.n === "Sun" || b.n === "Moon" ? "Sky" : b.n === "Pluto" ? "Dwarf planet" : "Planet", "b", i));
+  minors.forEach((m, i) => add(m.el[0], "Dwarf planet or asteroid", "k", i));
+  MOONS.forEach((m, i) => add(m.n, "Moon of " + m.p, "n", i));
+  for (let i = 0; i < NS; i++) { const n = NAMES[i]; if (n && (n[0] || n[1])) add(n[0] || n[1], "Star" + (n[0] && n[1] ? " · " + n[1] : ""), "s", i, n[1] || ""); }
+  MES.forEach((m, i) => add(m[1] || m[0], "Messier " + m[0].replace(/^M\s*/, "M"), "m", i, m[0]));
+  DS.forEach((o, i) => add(o[1] || o[0], "Deep-sky · " + (DTYPE[o[2]] || o[2]), "d", i, o[0]));
+  DF.forEach((o, i) => add(o.name, "Deep field", "f", i));
+  return out;
+}
+function findMatches(q) {
+  if (!FIND) FIND = buildFind();
+  const qn = fold(q).trim(); if (qn.length < 1) return [];
+  const sc2 = [];
+  for (const e of FIND) {
+    const n = fold(e.name), s = n === qn ? 0 : n.startsWith(qn) ? 1 : (" " + e.k).includes(" " + qn) ? 2 : e.k.includes(qn) ? 3 : -1;
+    if (s >= 0) sc2.push([s, e]);
+  }
+  sc2.sort((a, b) => a[0] - b[0] || a[1].name.length - b[1].name.length);
+  return sc2.slice(0, 10).map((x) => x[1]);
+}
+function renderFind() {
+  const q = $("findInput").value, ul = $("findResults"), r = findMatches(q);
+  ul.textContent = "";
+  $("noFind").hidden = !(q.trim().length >= 2 && !r.length);
+  for (const e of r) {
+    const li = document.createElement("li"), b = document.createElement("button"), nb = document.createElement("b"), sp = document.createElement("span");
+    b.type = "button"; b.className = "res"; nb.textContent = e.name; sp.textContent = e.sub;
+    b.append(nb, sp);
+    b.onclick = () => { closeS("findScrim"); setGoal({ t: e.t, i: e.i }); };
+    li.append(b); ul.append(li);
+  }
+}
+$("findInput").oninput = renderFind;
+$("findInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); const b = $("findResults").querySelector("button"); if (b) b.click(); } });
+$("findBtn").onclick = () => { openS("findScrim"); $("findInput").value = ""; renderFind(); if (fine) setTimeout(() => $("findInput").focus(), 30); };
 
 /* location */
 function openLoc() {

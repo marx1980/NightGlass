@@ -2,6 +2,8 @@
 
 A sky map that runs in your phone's browser. Point the phone at the sky, or turn on the camera view, and it names the star, planet, moon, constellation or deep-sky object in the crosshair. Works for any place on Earth and any date from the year 1000 to 2999.
 
+Tap the magnifier to search for any object by name (or tap an object and press the arrow button on its card). A green arrow then points the way as you move the phone. Stars, planets, and deep-sky objects get a light green ring once they're in view, and constellations get bold green lines.
+
 Open it at https://marx1980.github.io/NightGlass/ and allow camera and motion access when asked.
 
 ## Layout
