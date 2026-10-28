@@ -172,6 +172,16 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
   border-radius: 12px; padding: 11px 14px; font-size: 14.5px; line-height: 1.4;
 }
 
+.findhud {
+  position: fixed; z-index: 6; left: 50%; transform: translateX(-50%);
+  top: calc(env(safe-area-inset-top, 0px) + 64px); max-width: calc(100% - 32px); box-sizing: border-box;
+  display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 999px;
+  background: var(--glass); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border: 1px solid rgba(154,245,168,.55); color: #b8f7c2; font-size: 14px; font-weight: 600;
+}
+.findhud[hidden] { display: none; }
+#findThis[aria-pressed="true"] { color: #9af5a8; border-color: rgba(154,245,168,.6); }
+
 /* red-light mode keeps dark adaptation: multiply everything to the red channel */
 .redlight { position: fixed; inset: 0; z-index: 50; pointer-events: none; background: #ff2a12; mix-blend-mode: multiply; }
 

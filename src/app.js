@@ -414,6 +414,7 @@ function draw() {
 
   ctx.shadowBlur = 0;
   drawGround(sky);
+  drawFinder();
   drawReticle();
 }
 
@@ -1044,6 +1045,151 @@ cardHead.onclick = (e) => { if (!e.target.closest("button")) setCardMode(S.cardM
 $("hideCard").onclick = () => setCardMode("off");
 $("showCard").onclick = () => setCardMode("full");
 document.querySelectorAll("#cardModeSeg button").forEach((x) => (x.onclick = () => setCardMode(x.dataset.mode)));
+
+/* ---------- find an object ---------- */
+const GREEN = "#9af5a8";
+let finder = null, conSegs = null, findIdx = null;
+function findVec(f) {
+  const i = f.i;
+  if (f.t === "s") return [sH[i * 3], sH[i * 3 + 1], sH[i * 3 + 2]];
+  if (f.t === "b") return bod[i].h;
+  if (f.t === "n") return MOONS[i].h || null;
+  if (f.t === "k") return minors[i].h || null;
+  if (f.t === "m") return [mH[i * 3], mH[i * 3 + 1], mH[i * 3 + 2]];
+  if (f.t === "d") return [dH[i * 3], dH[i * 3 + 1], dH[i * 3 + 2]];
+  if (f.t === "f") return [fH[i * 3], fH[i * 3 + 1], fH[i * 3 + 2]];
+  if (f.t === "c") return [cH[i * 3], cH[i * 3 + 1], cH[i * 3 + 2]];
+  return null;
+}
+function conSegments() {
+  if (conSegs) return conSegs;
+  conSegs = CONS.map(() => []);
+  const idx = new Map(CONS.map((c, i) => [c[0], i]));
+  for (let i = 0; i < NL; i += 2) {
+    const j = i * 3;
+    const x = lEq[j] + lEq[j + 3], y = lEq[j + 1] + lEq[j + 4], z = lEq[j + 2] + lEq[j + 5];
+    try {
+      const c = A.Constellation(((Math.atan2(y, x) / D / 15) + 24) % 24, Math.asin(Math.max(-1, Math.min(1, z / Math.hypot(x, y, z)))) / D);
+      const k = idx.get(c.symbol); if (k != null) conSegs[k].push(i);
+    } catch (e) {}
+  }
+  return conSegs;
+}
+function findName(f) {
+  if (f.t === "c") return CONS[f.i][1];
+  if (f.t === "s") return starName(f.i);
+  if (f.t === "b") return bod[f.i].n;
+  if (f.t === "n") return MOONS[f.i].n;
+  if (f.t === "k") return minors[f.i].el[0];
+  if (f.t === "m") return MES[f.i][1] || MES[f.i][0];
+  if (f.t === "d") return DS[f.i][1] || DS[f.i][0];
+  return DF[f.i].name;
+}
+function buildFindIndex() {
+  const out = [], add = (t, i, label, sub, ...keys) => out.push({ t, i, label, sub, keys: [label, ...keys].filter(Boolean).map(fold) });
+  CONS.forEach((c, i) => add("c", i, c[1], "Constellation", c[0]));
+  bod.forEach((b, i) => add("b", i, b.n, b.n === "Sun" ? "Star" : b.n === "Moon" ? "Moon" : "Solar System"));
+  for (const k in NAMES) { const n = NAMES[k]; if (n[0]) add("s", +k, n[0], "Star" + (n[2] && SKY.full[n[2]] ? " · " + SKY.full[n[2]] : ""), n[1]); }
+  MES.forEach((m, i) => add("m", i, m[1] || m[0], m[1] ? m[0] : TYPE[m[2]] || "Deep-sky object", m[0], m[6]));
+  DF.forEach((f, i) => add("f", i, f.name, "Deep field"));
+  MOONS.forEach((m, i) => add("n", i, m.n, "Moon of " + m.p));
+  minors.forEach((m, i) => add("k", i, m.el[0], "Dwarf planet or asteroid"));
+  DS.forEach((o, i) => add("d", i, o[1] || o[0], o[1] ? o[0] : "Deep-sky object", o[0]));
+  return out;
+}
+function findSearch(q) {
+  const qn = fold(q).trim(); if (qn.length < 1) return [];
+  if (!findIdx) findIdx = buildFindIndex();
+  const hits = [];
+  for (let n = 0; n < findIdx.length; n++) {
+    let best = -1;
+    for (const k of findIdx[n].keys) {
+      const sc2 = k === qn ? 0 : k.startsWith(qn) ? 1 : (" " + k).includes(" " + qn) ? 2 : qn.length > 2 && k.includes(qn) ? 3 : -1;
+      if (sc2 >= 0 && (best < 0 || sc2 < best)) best = sc2;
+    }
+    if (best >= 0) hits.push([best, n]);
+  }
+  hits.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  return hits.slice(0, 8).map((h) => findIdx[h[1]]);
+}
+function renderFind() {
+  const q = $("findSearch").value, ul = $("findResults"), r = findSearch(q);
+  ul.textContent = "";
+  $("findNone").hidden = !(q.trim().length >= 1 && !r.length);
+  for (const x of r) {
+    const li = document.createElement("li"), b = document.createElement("button"), nb = document.createElement("b"), sp = document.createElement("span");
+    b.type = "button"; b.className = "res"; nb.textContent = x.label; sp.textContent = x.sub;
+    b.append(nb, sp); b.onclick = () => { closeS("findScrim"); startFind({ t: x.t, i: x.i }); };
+    li.append(b); ul.append(li);
+  }
+}
+function startFind(f) {
+  finder = f; dirty = true;
+  const v = findVec(f), name = findName(f);
+  toast(v && v[2] < 0 ? `${name} is below the horizon right now. Arrow shows where it is.` : V.mode === "drag" ? `Guiding you to ${name}. Switch to Point and move your phone to follow the arrow.` : `Guiding you to ${name}.`);
+}
+function stopFind() { finder = null; $("findHud").hidden = true; dirty = true; }
+$("findBtn").onclick = () => { $("findSearch").value = ""; renderFind(); openS("findScrim"); if (fine) setTimeout(() => $("findSearch").focus(), 30); };
+$("findSearch").oninput = renderFind;
+$("findSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); const b = $("findResults").querySelector("button"); if (b) b.click(); } });
+$("findStop").onclick = stopFind;
+$("findThis").onclick = () => {
+  let o = pinned || target;
+  if (!o) { const c = conSymAt(F), i = c ? CONS.findIndex((x) => x[0] === c.symbol) : -1; if (i >= 0) o = { t: "c", i }; }
+  if (o) startFind({ t: o.t, i: o.i }); else toast("Point at an object or tap one first, or use the search button.");
+};
+function drawFinder() {
+  const hud = $("findHud");
+  if (!finder) return;
+  const v = findVec(finder);
+  if (!v) { hud.hidden = true; return; }
+  const name = findName(finder);
+  ctx.save();
+  ctx.strokeStyle = GREEN; ctx.fillStyle = GREEN;
+  if (finder.t === "c") {
+    // bold green constellation lines
+    ctx.lineWidth = 3.4; ctx.lineCap = "round"; ctx.shadowColor = "rgba(154,245,168,0.7)"; ctx.shadowBlur = 6;
+    ctx.beginPath();
+    for (const i of conSegments()[finder.i]) {
+      const j = i * 3;
+      proj(lH[j], lH[j + 1], lH[j + 2]); if (P.c < (camOn ? 0.12 : 0.05)) continue;
+      const x1 = P.x, y1 = P.y;
+      proj(lH[j + 3], lH[j + 4], lH[j + 5]); if (P.c < (camOn ? 0.12 : 0.05)) continue;
+      ctx.moveTo(x1, y1); ctx.lineTo(P.x, P.y);
+    }
+    ctx.stroke();
+  }
+  proj(v[0], v[1], v[2]);
+  const px = P.x, py = P.y, front = P.c > (camOn ? 0.1 : -0.2), inView = front && px > 0 && px < W && py > 0 && py < H;
+  if (finder.t !== "c" && inView) {
+    let r = 18;
+    if (finder.t === "d") r = Math.max(r, (DS[finder.i][5] * sc * D / 60) / 2 + 8);
+    else if (finder.t === "b") { const w = WIKI[bod[finder.i].n], b = bod[finder.i]; if (w && b.dist) r = Math.max(r, (w.r / (b.dist * AU_KM)) * sc + 8); }
+    ctx.lineWidth = 2.2; ctx.shadowColor = "rgba(154,245,168,0.8)"; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 1; ctx.globalAlpha = 0.45; ctx.beginPath(); ctx.arc(px, py, r + 5, 0, Math.PI * 2); ctx.stroke();
+  }
+  // arrow from the crosshair toward the target
+  const a = dot(v, R), b = dot(v, U), c = dot(v, F), ang = Math.acos(Math.max(-1, Math.min(1, c))) / D;
+  const dist = Math.hypot(px - cx, py - cy);
+  if (!(inView && dist < 60)) {
+    const th = Math.hypot(a, b) < 1e-6 ? -Math.PI / 2 : Math.atan2(-b, a), ux = Math.cos(th), uy = Math.sin(th);
+    const r0 = 44, r1 = Math.max(r0 + 34, Math.min(110, Math.min(W, H) * 0.24)), hw = 11;
+    ctx.globalAlpha = 1; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 5;
+    ctx.beginPath(); ctx.moveTo(cx + ux * r0, cy + uy * r0); ctx.lineTo(cx + ux * (r1 - 6), cy + uy * (r1 - 6)); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + ux * (r1 + 10), cy + uy * (r1 + 10));
+    ctx.lineTo(cx + ux * (r1 - 8) - uy * hw, cy + uy * (r1 - 8) + ux * hw);
+    ctx.lineTo(cx + ux * (r1 - 8) + uy * hw, cy + uy * (r1 - 8) - ux * hw);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  const hor = Math.abs(a) < 0.02 ? "" : a > 0 ? "right" : "left", ver = Math.abs(b) < 0.02 ? "" : b > 0 ? "up" : "down";
+  const way = c < 0 ? "behind you" : [hor, ver].filter(Boolean).join(" and ");
+  const txt = ang < 2.5 && finder.t !== "c" ? `${name} · in view` : `${name} · ${Math.round(ang)}° away${way ? ", " + way : ""}${v[2] < 0 ? " · below horizon" : ""}`;
+  if ($("findTxt").textContent !== txt) $("findTxt").textContent = txt;
+  hud.hidden = false;
+}
 
 /* ---------- point mode: device orientation ---------- */
 let oriListening = false, gotOri = false, iosOff = null, oriTimer = null, wakeLock = null;

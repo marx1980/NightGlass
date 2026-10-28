@@ -20,6 +20,7 @@
 
 <div class="zoom">
   <button class="icon" id="camBtn" aria-pressed="false" aria-label="Camera view" title="Camera view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.8l1.5-2h6.4l1.5 2h2.8A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.6"/></svg></button>
+  <button class="icon" id="findBtn" aria-label="Find an object" title="Find an object"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
   <button class="icon pill" id="alignBtn" hidden title="Put a bright star you can see in the crosshair, then tap">Align</button>
   <button class="icon" id="zin" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
   <button class="icon" id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
@@ -37,6 +38,9 @@
         <div class="alias" id="alias" hidden></div>
       </div>
       <div class="card-btns">
+        <button class="icon close" id="findThis" aria-label="Guide me to this object" title="Guide me to this object">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 17-7-4-7 4z"/></svg>
+        </button>
         <button class="icon close" id="unpin" hidden aria-label="Back to crosshair">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
         </button>
@@ -63,6 +67,22 @@
     <p class="fact" id="fact"></p>
     <p class="meta" id="meta"></p>
   </section>
+</div>
+
+<div class="findhud" id="findHud" hidden>
+  <span id="findTxt"></span>
+  <button class="icon close" id="findStop" aria-label="Stop guiding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
+
+<!-- find -->
+<div class="scrim" id="findScrim" hidden>
+  <form class="sheet" id="findForm" autocomplete="off">
+    <div class="sheet-head"><h2>Find</h2><button type="button" class="icon close" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <label class="f">Search by name<input type="text" id="findSearch" placeholder="Vega, Jupiter, Orion, M31…" enterkeyhint="search"></label>
+    <ul class="results" id="findResults"></ul>
+    <p class="note" id="findNone" hidden>Nothing by that name. Try another spelling.</p>
+    <p class="note">An arrow guides you as you move your phone. Stars, planets and deep-sky objects get a light green ring; constellations get bold green lines. You can also tap an object, then tap the arrow button on its card.</p>
+  </form>
 </div>
 
 <!-- location -->
