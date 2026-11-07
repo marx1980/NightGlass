@@ -15,6 +15,7 @@ mkdir -p dist
   printf ';\nconst MINFO='; cat data/minfo.json
   printf ';\nconst CINFO='; cat data/cinfo.json
   printf ';\nconst DSO='; cat data/dso.json
+  printf ';\nconst MGAL='; cat data/mgal.json
   printf ';\nconst SOLAR='; cat data/solar.json
   echo ';'
   echo '</script>'

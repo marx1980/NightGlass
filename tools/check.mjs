@@ -19,6 +19,9 @@ for (const o of S.minor) {
 const D = JSON.parse(fs.readFileSync('data/dso.json', 'utf8'));
 ok(D.dso.length > 2500 && D.dso.length < 6000, 'dso.json: expected a few thousand objects');
 ok(D.fields.length >= 4, 'dso.json: deep fields missing');
+ok(D.dso.some((o) => o[2] === 'BH'), 'dso.json: Sagittarius A* missing');
+const MG = JSON.parse(fs.readFileSync('data/mgal.json', 'utf8'));
+ok(Object.keys(MG).length >= 38, 'mgal.json: Messier galaxy shapes missing');
 const html = fs.readFileSync('index.html', 'utf8');
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 ok(scripts.length >= 3, 'index.html: inline scripts missing');

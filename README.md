@@ -14,6 +14,7 @@ Open it at https://marx1980.github.io/NightGlass/ and allow camera and motion ac
 - `tools/build.sh`: rebuilds `index.html` and `dist/page.html`
 - `tools/check.mjs`: sanity checks after a data change
 - `tools/mkdso.py`: rebuilds the deep-sky list from OpenNGC plus the Wikipedia tables
+- `tools/mkmgal.py`: rebuilds `data/mgal.json` (Messier galaxy shapes for the map icons) from OpenNGC
 - `UPDATING.md`: the quarterly Wikipedia refresh procedure
 
 ## Data sources
@@ -29,5 +30,7 @@ Open it at https://marx1980.github.io/NightGlass/ and allow camera and motion ac
 - Saturn's eight main moons: Meeus chapter 46 via astronomia (MIT)
 - Dwarf planets and large asteroids: Wikipedia orbital elements, two-body orbits (shown for 1990–2060, or 1900–2150 beyond Neptune)
 - Sizes, masses, rotation, orbits, moon counts and discovery dates of Solar System bodies: Wikipedia, refreshed quarterly (see `UPDATING.md`)
+- Galaxy icons: shape by Hubble type (OpenNGC; Messier types from Wikipedia), turned to the real position angle and squashed by the real axis ratio
+- Sagittarius A* (the Milky Way's central black hole): J2000 position and Wikipedia facts
 - Object photos: fetched from Wikipedia when you tap the photo button on the card (needs a connection; author and licence are on the linked article)
 - Cities and time zones: city-timezones

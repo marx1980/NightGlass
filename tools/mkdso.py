@@ -38,6 +38,8 @@ for r in rows:
     rv=f(r['RadVel']) or ((f(r['Redshift']) or 0)*299792.458 or None)
     out.append([name,common,r['Type'],round(hms(r['RA']),4),round(dms(r['Dec']),4),round(maj,2),round(f(r['MinAx']) or 0,2),int(f(r['PosAng']) or -1),
                 mag if mag is not None else None,r['Const'],int(round(dist)) if dist else 0,ds,r['Hubble'],int(round(rv)) if rv else 0,int(c['C']) if c else 0])
+# the Milky Way's central black hole (Sagittarius A*): J2000 17h45m40.04s -29d00m28.1s, about 26,700 ly away
+out.append(['Sgr A*','Sagittarius A*','BH',266.41684,-29.00781,0,0,-1,None,'Sgr',26700,1,'',0,0])
 out.sort(key=lambda x:(x[8] if x[8] is not None else 14))
 df=json.load(open('data/wikipedia/deepfields.json'))
 for d in df: d['ra']=round(hms(d['ra']),5); d['dec']=round(dms(d['dec']),5)

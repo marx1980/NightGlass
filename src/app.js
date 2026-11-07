@@ -293,12 +293,16 @@ function draw() {
     const m = MES[i]; if (m[3] > limMag + 3) continue;
     proj(mH[i * 3], mH[i * 3 + 1], mH[i * 3 + 2]); if (!onScreen(20)) continue;
     const x = P.x, y = P.y;
-    ctx.strokeStyle = "rgba(175,195,235,0.55)";
-    ctx.beginPath();
-    if (m[2] === "s" || m[2] === "e" || m[2] === "i") ctx.ellipse(x, y, 6, 3, -0.5, 0, Math.PI * 2);
-    else if (m[2] === "gc" || m[2] === "oc") { ctx.setLineDash([2, 2]); ctx.arc(x, y, 4.5, 0, Math.PI * 2); }
-    else ctx.rect(x - 4, y - 4, 8, 8);
-    ctx.stroke(); ctx.setLineDash([]);
+    if (m[2] === "s" || m[2] === "e" || m[2] === "i") {
+      const g = MGAL[m[0]], rM = g ? g[1] * sc * D / 120 : 0;
+      drawGalaxy(x, y, g ? g[0] : m[2], Math.max(rM, galR(m[3])), g && g[3] >= 0 ? paAngle(m[4], m[5], g[3], x, y) : -0.5, g && g[1] ? g[2] / g[1] : 0.6);
+    } else {
+      ctx.strokeStyle = "rgba(175,195,235,0.55)";
+      ctx.beginPath();
+      if (m[2] === "gc" || m[2] === "oc") { ctx.setLineDash([2, 2]); ctx.arc(x, y, 4.5, 0, Math.PI * 2); }
+      else ctx.rect(x - 4, y - 4, 8, 8);
+      ctx.stroke(); ctx.setLineDash([]);
+    }
     cands.push({ t: "m", i, x, y, w: 6 - Math.min(m[3], 9) * 0.5 });
   }
 
@@ -401,7 +405,7 @@ function draw() {
       place(n[0], P.x + 7, P.y - 5, "500 12.5px " + uiFont, "rgba(225,232,245,0.82)");
     }
     for (let i = 0; i < MES.length; i++) {
-      const m = MES[i]; if (m[3] > 6.5 && V.fov > 40) continue;
+      const m = MES[i]; if (m[3] > limMag + 3 || (m[3] > 6.5 && V.fov > 40)) continue;
       proj(mH[i * 3], mH[i * 3 + 1], mH[i * 3 + 2]); if (!onScreen(0)) continue;
       place(m[1] || m[0], P.x + 8, P.y + 12, "italic 400 14px " + dispFont, "rgba(175,195,235,0.8)");
     }
@@ -805,14 +809,15 @@ function describeMinor(o) {
 /* ---------- NGC / IC deep-sky objects (OpenNGC + Wikipedia distances) and deep fields ---------- */
 const DTYPE = { G: "Galaxy", GGroup: "Galaxy group", GPair: "Galaxy pair", GTrpl: "Galaxy triplet", OCl: "Open cluster", GCl: "Globular cluster",
   "Cl+N": "Cluster with nebula", PN: "Planetary nebula", HII: "Emission nebula", EmN: "Emission nebula", Neb: "Nebula", RfN: "Reflection nebula",
-  SNR: "Supernova remnant", DrkN: "Dark nebula", "*Ass": "Star association" };
+  SNR: "Supernova remnant", DrkN: "Dark nebula", "*Ass": "Star association", BH: "Supermassive black hole" };
 const DFACT = { "Open cluster": "A loose group of young stars born together from the same cloud.", "Globular cluster": "A dense ball of very old stars orbiting our galaxy.",
   "Planetary nebula": "A glowing shell of gas thrown off by a dying Sun-like star.", "Emission nebula": "A cloud of hydrogen glowing as hot young stars nearby energise it.",
   "Reflection nebula": "Dust reflecting the light of nearby stars, which makes it look blue in photos.", "Supernova remnant": "The expanding debris of an exploded star.",
   "Dark nebula": "A cloud of dust thick enough to block the light behind it.", "Nebula": "A cloud of gas and dust in our galaxy.",
   "Cluster with nebula": "Young stars still surrounded by the gas cloud they formed from.", "Star association": "A loose, scattered group of young stars moving together.",
   "Elliptical galaxy": "A smooth, ball-shaped galaxy of mostly old stars.", "Spiral galaxy": "A disc galaxy with spiral arms, like our own Milky Way.",
-  "Barred spiral galaxy": "A spiral galaxy with a bar of stars across its centre, like our own Milky Way.", "Lenticular galaxy": "A disc galaxy without spiral arms.",
+  "Barred spiral galaxy": "A spiral galaxy with a bar of stars across its centre, like our own Milky Way.",
+  "Weakly barred spiral galaxy": "A spiral galaxy with a short bar of stars across its centre.", "Lenticular galaxy": "A disc galaxy without spiral arms.",
   "Irregular galaxy": "A galaxy without a regular shape.", "Galaxy": "A separate galaxy, far beyond the Milky Way.",
   "Galaxy pair": "Galaxies close together in space, held by gravity.", "Galaxy triplet": "Galaxies close together in space, held by gravity.", "Galaxy group": "Galaxies close together in space, held by gravity." };
 function galaxyWord(h) {
@@ -820,6 +825,7 @@ function galaxyWord(h) {
   if (/^(S0|SA0|SB0|SAB0)/.test(h)) return "Lenticular galaxy";
   if (/^E/.test(h)) return "Elliptical galaxy";
   if (/^SB/.test(h)) return "Barred spiral galaxy";
+  if (/^SAB/.test(h)) return "Weakly barred spiral galaxy";
   if (/^S/.test(h)) return "Spiral galaxy";
   if (/^I/.test(h)) return "Irregular galaxy";
   return "Galaxy";
@@ -843,21 +849,100 @@ function paAngle(raDeg, decDeg, pa, x, y) {
   const N = pt(n), E = pt(ea), q = pa * D;
   return Math.atan2(N[1] * Math.cos(q) + E[1] * Math.sin(q), N[0] * Math.cos(q) + E[0] * Math.sin(q));
 }
+/* ---------- galaxy icons: one shape per galaxy type, turned to the real position angle and squashed by the real axis ratio ---------- */
+// s spiral, w weakly barred spiral, b barred spiral, l lenticular, e elliptical, i irregular, g unknown, p pair, t triplet or group
+const GAL_COL = { s: ["150,205,255", "255,242,210"], e: ["255,208,140", "255,246,226"], l: ["200,226,244", "255,246,226"], i: ["220,168,255", "255,236,255"], g: ["165,195,245", "255,244,220"] };
+GAL_COL.b = GAL_COL.w = GAL_COL.s; GAL_COL.p = GAL_COL.t = GAL_COL.g;
+const galR = (m) => Math.max(6, Math.min(12.5, 6 + (13.5 - m) * 0.6));
+function galKind(h) {
+  if (!h) return "g";
+  if (/^(S0|SA0|SB0|SAB0)/.test(h)) return "l";
+  if (/^E/.test(h)) return "e";
+  if (/^SB/.test(h)) return "b";
+  if (/^SAB/.test(h)) return "w";
+  if (/^S/.test(h)) return "s";
+  if (/^I/.test(h)) return "i";
+  return "g";
+}
+function drawGalaxy(x, y, kind, R, ang, ratio) {
+  if (kind === "p" || kind === "t") {
+    const n = kind === "p" ? 2 : 3;
+    for (let k = 0; k < n; k++) { const a = ang + (n === 2 ? k * Math.PI : k * 2 * Math.PI / 3), d = R * 0.55; drawGalaxy(x + Math.cos(a) * d, y + Math.sin(a) * d, "g", R * 0.55, a, 0.6); }
+    return;
+  }
+  let q = Math.max(0.28, Math.min(1, ratio || 0.7));
+  if (kind === "l") q = Math.min(q, 0.5); else if (kind === "i") q = Math.max(q, 0.6);
+  const [c1, c2] = GAL_COL[kind] || GAL_COL.g, ca = Math.cos(ang), sa = Math.sin(ang);
+  const T = (u, v) => [x + (u * ca - v * q * sa) * R, y + (u * sa + v * q * ca) * R];
+  const ell = (rx, ry) => ctx.ellipse(x, y, rx, ry, ang, 0, Math.PI * 2);
+  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.setLineDash([]);
+  ctx.shadowColor = `rgba(${c1},0.85)`; ctx.shadowBlur = 8;
+  ctx.strokeStyle = `rgba(${c1},0.95)`; ctx.fillStyle = `rgba(${c2},0.95)`; ctx.lineWidth = 1.7;
+  if (kind === "s" || kind === "b" || kind === "w") {
+    const bar = kind === "b" ? 0.5 : kind === "w" ? 0.3 : 0, r0 = bar || 0.16;
+    for (let arm = 0; arm < 2; arm++) {
+      ctx.beginPath();
+      for (let k = 0; k <= 16; k++) { const t = k / 16, r = r0 + (1 - r0) * t, th = arm * Math.PI + 3.3 * t, p = T(r * Math.cos(th), r * Math.sin(th)); if (k) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }
+      ctx.stroke();
+    }
+    if (bar) { const a = T(-bar, 0), b = T(bar, 0); ctx.lineWidth = 2.8; ctx.strokeStyle = `rgba(${c2},0.95)`; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+    const rc = Math.max(1.8, R * 0.2); ctx.beginPath(); ell(rc, Math.max(1.3, rc * q)); ctx.fill();
+    ctx.shadowBlur = 0; ctx.lineWidth = 1; ctx.strokeStyle = `rgba(${c1},0.4)`; ctx.beginPath(); ell(R, R * q); ctx.stroke();
+  } else if (kind === "e") {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(1, q);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    g.addColorStop(0, `rgba(${c2},1)`); g.addColorStop(0.4, `rgba(${c1},0.75)`); g.addColorStop(1, `rgba(${c1},0.12)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.lineWidth = 1.3; ctx.beginPath(); ell(R, R * q); ctx.stroke();
+  } else if (kind === "l") {
+    ctx.beginPath(); ell(R, R * q); ctx.stroke();
+    const a = T(-1.4, 0), b = T(1.4, 0); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    ctx.beginPath(); ell(R * 0.4, R * 0.4 * Math.min(1, q * 1.6)); ctx.fill();
+  } else if (kind === "i") {
+    const B = [[-0.55, 0.15, 0.34], [0.05, -0.5, 0.3], [0.5, 0.25, 0.38], [-0.05, 0.5, 0.24], [0.02, 0.02, 0.42], [0.65, -0.4, 0.16], [-0.72, -0.5, 0.15]];
+    ctx.fillStyle = `rgba(${c1},0.7)`;
+    for (const [u, v, r] of B) { const p = T(u, v); ctx.beginPath(); ctx.arc(p[0], p[1], Math.max(1.2, R * r * 0.6), 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = `rgba(${c2},0.95)`; const c = T(0.02, 0.02); ctx.beginPath(); ctx.arc(c[0], c[1], Math.max(1.5, R * 0.14), 0, Math.PI * 2); ctx.fill();
+  } else {
+    ctx.beginPath(); ell(R, R * q); ctx.stroke();
+    const rc = Math.max(1.6, R * 0.22); ctx.beginPath(); ell(rc, Math.max(1.2, rc * q)); ctx.fill();
+  }
+  ctx.restore();
+}
+// the Milky Way's central black hole: dark disc, glowing ring, faint halo
+function drawBH(x, y, R) {
+  ctx.save();
+  const g = ctx.createRadialGradient(x, y, 0, x, y, R * 3);
+  g.addColorStop(0, "rgba(255,170,80,0.55)"); g.addColorStop(1, "rgba(255,170,80,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R * 3, 0, Math.PI * 2); ctx.fill();
+  ctx.setLineDash([2, 3]); ctx.strokeStyle = "rgba(255,196,130,0.65)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, R * 1.35, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  ctx.shadowColor = "rgba(255,150,60,0.95)"; ctx.shadowBlur = 10; ctx.strokeStyle = "#ffb15a"; ctx.lineWidth = 2.8;
+  ctx.fillStyle = "#02030a"; ctx.beginPath(); ctx.arc(x, y, R * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
 function drawDSO() {
   const lim = Math.min(14, 8 + Math.log2(70 / V.fov) * 1.4), pxArc = sc * D / 60;
   ctx.lineWidth = 1;
   for (let i = 0; i < NDS; i++) {
-    const o = DS[i], m = dMag(o); if (m > lim) continue;
+    const o = DS[i], m = dMag(o), bh = o[2] === "BH"; if (m > lim && !bh) continue;
     proj(dH[i * 3], dH[i * 3 + 1], dH[i * 3 + 2]); if (!onScreen(30)) continue;
     const x = P.x, y = P.y, gal = o[2] !== "GCl" && o[2][0] === "G";
     const rMaj = o[5] * pxArc / 2, rMin = (o[6] || o[5]) * pxArc / 2;
+    if (bh) { drawBH(x, y, 8); cands.push({ t: "d", i, x, y, w: 12 }); continue; }
+    if (gal) {
+      const kind = o[2] === "GPair" ? "p" : o[2] === "GGroup" || o[2] === "GTrpl" ? "t" : galKind(o[12]);
+      const ang = o[7] >= 0 ? paAngle(o[3], o[4], o[7], x, y) : -0.5;
+      drawGalaxy(x, y, kind, Math.max(rMaj, galR(m)), ang, rMaj > 0 ? rMin / rMaj : 0.6);
+      cands.push({ t: "d", i, x, y, w: 6 });
+      continue;
+    }
     ctx.strokeStyle = "rgba(160,182,228,0.5)";
     ctx.beginPath();
     if (rMaj > 7) {
       const ang = o[7] >= 0 ? paAngle(o[3], o[4], o[7], x, y) : 0;
       if (o[2] === "OCl" || o[2] === "GCl") ctx.setLineDash([3, 3]);
       ctx.ellipse(x, y, rMaj, Math.max(2, rMin), ang, 0, Math.PI * 2);
-    } else if (gal) ctx.ellipse(x, y, 4.5, 2.2, -0.5, 0, Math.PI * 2);
+    }
     else if (o[2] === "OCl" || o[2] === "GCl" || o[2] === "*Ass") { ctx.setLineDash([2, 2]); ctx.arc(x, y, 3.5, 0, Math.PI * 2); }
     else if (o[2] === "PN") { ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.moveTo(x + 5, y); ctx.lineTo(x + 3, y); ctx.moveTo(x - 5, y); ctx.lineTo(x - 3, y); }
     else ctx.rect(x - 3.5, y - 3.5, 7, 7);
@@ -874,10 +959,10 @@ function drawDSO() {
 function labelDSO(place) {
   const lim = Math.min(14, 8 + Math.log2(70 / V.fov) * 1.4);
   for (let i = 0; i < NDS; i++) {
-    const o = DS[i], m = dMag(o);
-    if (m > lim || !(o[1] ? m <= lim - 1.5 || V.fov < 15 : V.fov < 5)) continue;
+    const o = DS[i], m = dMag(o), bh = o[2] === "BH";
+    if (bh ? V.fov > 60 : (m > lim || !(o[1] ? m <= lim - 1.5 || V.fov < 15 : V.fov < 5))) continue;
     proj(dH[i * 3], dH[i * 3 + 1], dH[i * 3 + 2]); if (!onScreen(0)) continue;
-    place(o[1] || o[0], P.x + 8, P.y + 12, "italic 400 13px " + dispFont, "rgba(160,182,228,0.75)");
+    place(o[1] || o[0], P.x + 8, P.y + 12, "italic 400 13px " + dispFont, bh ? "rgba(255,196,130,0.95)" : "rgba(160,182,228,0.75)");
   }
   for (let i = 0; i < DF.length; i++) {
     proj(fH[i * 3], fH[i * 3 + 1], fH[i * 3 + 2]); if (!onScreen(0)) continue;
@@ -886,6 +971,10 @@ function labelDSO(place) {
 }
 function describeDSO(o) {
   const d = DS[o.i], h = [dH[o.i * 3], dH[o.i * 3 + 1], dH[o.i * 3 + 2]], aa = altaz(h), con = SKY.full[d[9]] || conAt(h) || "";
+  if (d[2] === "BH") return { key: "d" + o.i, kind: "Black hole" + (con ? " · " + con : ""), name: d[1], alias: "The centre of the Milky Way",
+    a: [["Distance", "≈ 26,700 ly"], ["Mass in Suns", "4.3 million"], ["Width, km", "25 million"]], s1l: "Brightness", s1: "Invisible", alt: aa.alt, az: aa.az,
+    fact: "The Milky Way's central black hole. Dust hides it from visible light, so it is found through radio waves and the stars racing around it.",
+    meta: sentence(["Its event horizon would fit well inside Mercury's orbit", "The Event Horizon Telescope imaged it in 2022", riseTxt(d[4])]) };
   const gal = d[2] !== "GCl" && d[2][0] === "G", type = d[2] === "G" ? galaxyWord(d[12]) : DTYPE[d[2]] || "Deep-sky object";
   const dist = d[10], est = d[11] === 2, mag = d[8], sizeLy = dist && d[5] ? dist * d[5] / 60 * D : 0;
   const ang = d[5] ? fmtArc(d[5]) + (d[6] && d[6] !== d[5] ? " × " + fmtArc(d[6]) : "") : "";
@@ -1381,7 +1470,7 @@ function buildFind() {
   MOONS.forEach((m, i) => add(m.n, "Moon of " + m.p, "n", i));
   for (let i = 0; i < NS; i++) { const n = NAMES[i]; if (n && (n[0] || n[1])) add(n[0] || n[1], "Star" + (n[0] && n[1] ? " · " + n[1] : ""), "s", i, n[1] || ""); }
   MES.forEach((m, i) => add(m[1] || m[0], "Messier " + m[0].replace(/^M\s*/, "M"), "m", i, m[0]));
-  DS.forEach((o, i) => add(o[1] || o[0], "Deep-sky · " + (DTYPE[o[2]] || o[2]), "d", i, o[0]));
+  DS.forEach((o, i) => add(o[1] || o[0], "Deep-sky · " + (DTYPE[o[2]] || o[2]), "d", i, o[0] + (o[2] === "BH" ? " black hole galactic centre center milky way supermassive" : "")));
   DF.forEach((o, i) => add(o.name, "Deep field", "f", i));
   return out;
 }
