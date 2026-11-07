@@ -1,5 +1,5 @@
 {
- "checked": "2026-10-22",
+ "checked": "2026-11-07",
  "note": "Values from Wikipedia. See UPDATING.md for the pages and fields.",
  "bodies": {
   "Sun": {
@@ -327,7 +327,7 @@
    "n": null,
    "H": 5.65,
    "radiusKm": 216.5,
-   "massKg": 87400000000000000000,
+   "massKg": 8.236e+19,
    "discovered": 1849,
    "moons": 0,
    "periodYr": null,
@@ -349,7 +349,7 @@
    "massKg": 3.952e+21,
    "discovered": 2004,
    "moons": 2,
-   "periodYr": 283.8,
+   "periodYr": 283.12,
    "fact": "It spins once every 3.9 hours, which stretches it into an egg shape."
   },
   {
@@ -368,7 +368,7 @@
    "massKg": 2.69e+21,
    "discovered": 2005,
    "moons": 1,
-   "periodYr": 306.2,
+   "periodYr": 306.7,
    "fact": "Named after the creator god of the Rapa Nui people of Easter Island."
   },
   {
@@ -384,7 +384,7 @@
    "n": null,
    "H": -1.26,
    "radiusKm": 1163,
-   "massKg": 1.638e+22,
+   "massKg": 1.6466e+22,
    "discovered": 2005,
    "moons": 1,
    "periodYr": 559,
@@ -406,7 +406,7 @@
    "massKg": 547800000000000000000,
    "discovered": 2004,
    "moons": 1,
-   "periodYr": 247.49,
+   "periodYr": 245.19,
    "fact": "Its orbit mirrors Pluto's, so it is sometimes called the anti-Pluto."
   },
   {
@@ -425,7 +425,7 @@
    "massKg": 1.212e+21,
    "discovered": 2002,
    "moons": 1,
-   "periodYr": 287.97,
+   "periodYr": 288.83,
    "fact": "It has a ring much farther out than rings were thought able to survive."
   },
   {
@@ -444,7 +444,7 @@
    "massKg": 1.75e+21,
    "discovered": 2007,
    "moons": 1,
-   "periodYr": 552.52,
+   "periodYr": 547.13,
    "fact": "Named after a Chinese water god."
   },
   {
@@ -463,7 +463,7 @@
    "massKg": null,
    "discovered": 2003,
    "moons": 0,
-   "periodYr": 12059,
+   "periodYr": 11390,
    "fact": "One of the most distant known objects in the Solar System."
   }
  ]
