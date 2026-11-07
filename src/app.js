@@ -969,6 +969,7 @@ function updateCard(force) {
   $("fact").textContent = d.fact; $("fact").hidden = !d.fact;
   $("meta").textContent = d.meta; $("meta").hidden = !d.meta;
   $("goBtn").hidden = !o || (goal && goal.t === o.t && goal.i === o.i);
+  $("photoBtn").hidden = !photoTitles(o);
 }
 
 /* ---------- clock & place ---------- */
@@ -1316,6 +1317,59 @@ function drawGuide() {
 function setGoal(g) { goal = g; if (g) { pinned = { t: g.t, i: g.i }; } dirty = true; updateCard(true); }
 $("guideStop").onclick = () => { goal = null; dirty = true; };
 $("goBtn").onclick = () => { const o = pinned || target; if (o) setGoal({ t: o.t, i: o.i }); };
+
+/* ---------- photo: fetched from Wikipedia when the photo button is tapped ---------- */
+const MINOR_WIKI = { Ceres: "Ceres (dwarf planet)", Vesta: "4 Vesta", Pallas: "2 Pallas", Juno: "3 Juno", Hygiea: "10 Hygiea", Eris: "Eris (dwarf planet)",
+  Orcus: "Orcus (dwarf planet)", Gonggong: "Gonggong (dwarf planet)", Sedna: "Sedna (dwarf planet)" };
+function photoTitles(o) {
+  if (!o) return null;
+  const uniq = (a) => a.filter((x, i) => x && a.indexOf(x) === i);
+  switch (o.t) {
+    case "b": { const n = bod[o.i].n; return [n === "Mercury" ? "Mercury (planet)" : n]; }
+    case "n": { const n = MOONS[o.i].n; return [n + " (moon)", n]; }
+    case "k": { const n = minors[o.i].el[0]; return [MINOR_WIKI[n] || n]; }
+    case "m": { const m = MES[o.i]; return uniq(["Messier " + m[0].slice(1), m[1]]); }
+    case "d": { const d = DS[o.i]; return uniq([d[1], d[0]]); }
+    case "f": return [DF[o.i].name];
+  }
+  return null; // stars and constellations have no photo button
+}
+const PHOTOS = new Map(); // titles -> { src, big, title, page } | false (no photo)
+async function fetchPhoto(titles) {
+  for (const t of titles) {
+    let j;
+    try {
+      const r = await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(t.replace(/ /g, "_")));
+      if (r.status === 404) continue;
+      if (!r.ok) return "net";
+      j = await r.json();
+    } catch (e) { return "net"; }
+    if (!j || j.type === "disambiguation") continue;
+    const th = j.thumbnail || j.originalimage; if (!th) continue;
+    const big = j.originalimage && j.originalimage.width >= 500 && /\/\d+px-/.test(th.source) ? th.source.replace(/\/\d+px-/, "/500px-") : th.source;
+    return { src: th.source, big, title: j.title || t, page: (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || "https://en.wikipedia.org/wiki/" + encodeURIComponent(t.replace(/ /g, "_")) };
+  }
+  return false;
+}
+let photoSeq = 0;
+$("photoBtn").onclick = async () => {
+  const o = pinned || target, c = photoTitles(o); if (!c) return;
+  const seq = ++photoSeq, key = c.join("|"), img = $("photoImg"), msg = $("photoMsg"), cr = $("photoCredit");
+  $("photoName").textContent = $("name").textContent;
+  img.hidden = true; img.removeAttribute("src"); cr.hidden = true; msg.hidden = false; msg.textContent = "Loading photo…";
+  openS("photoScrim");
+  let r = PHOTOS.get(key);
+  if (r === undefined) { r = await fetchPhoto(c); if (r !== "net") PHOTOS.set(key, r); }
+  if (seq !== photoSeq || $("photoScrim").hidden) return;
+  if (r === "net") { msg.textContent = "Couldn't load the photo. Check your connection and try again."; return; }
+  if (!r) { msg.textContent = "Wikipedia has no photo for this object."; return; }
+  img.onload = () => { msg.hidden = true; img.hidden = false; };
+  img.onerror = () => { if (img.src !== r.src) img.src = r.src; else { img.hidden = true; msg.hidden = false; msg.textContent = "Couldn't load the photo. Check your connection and try again."; } };
+  img.alt = r.title; img.src = r.big;
+  cr.textContent = "";
+  const a = document.createElement("a"); a.href = r.page; a.target = "_blank"; a.rel = "noopener"; a.textContent = r.title + " on Wikipedia";
+  cr.append("Photo from ", a, ". Author and licence are listed there."); cr.hidden = false;
+};
 
 /* find: search the sky by name */
 let FIND = null;

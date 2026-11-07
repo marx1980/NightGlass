@@ -170,6 +170,9 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
 .guide span { overflow: hidden; text-overflow: ellipsis; }
 .guide[hidden] { display: none; }
 
+.photo-box { display: grid; place-items: center; min-height: 120px; }
+#photoImg { display: block; max-width: 100%; max-height: 58vh; border-radius: 10px; object-fit: contain; background: #070b16; }
+#photoCredit a { color: var(--amber); }
 .toast {
   position: fixed; z-index: 30; left: 50%; transform: translateX(-50%);
   top: calc(env(safe-area-inset-top, 0px) + 70px); width: min(440px, calc(100% - 32px)); box-sizing: border-box;
