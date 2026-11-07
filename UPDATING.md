@@ -1,6 +1,11 @@
-# Quarterly data refresh
+# Data refresh
 
-This is the procedure for the quarterly scheduled refresh (1 January, April, July, October). It keeps the Wikipedia-sourced values in `data/` current, rebuilds the page, and publishes it.
+There are two scheduled runs:
+
+- **Yearly, 1 January: full refresh** of every Wikipedia-sourced value in the table below.
+- **Quarterly, 1 April, July, October: moon counts only** (the `bodies.*.moons` and `asOf` row; see "Quarterly moon-count check" at the end). The January full refresh covers the fourth quarter.
+
+The rest of this file describes the full refresh. It keeps the Wikipedia-sourced values in `data/` current, rebuilds the page, and publishes it.
 
 ## What gets refreshed
 
@@ -23,7 +28,7 @@ Not refreshed by this routine: star positions and spectral data (`data/stars.js`
 
 1. **Read each page with WebSearch first, then WebFetch.** WebFetch only opens a URL that has already appeared in a WebSearch result in the same run (anything else fails with `URL_NOT_ON_ALLOWLIST`, no matter the site). So for every page in the table above: run `WebSearch` with `allowed_domains: ["en.wikipedia.org"]` and the exact page title as the query (for example `Sedna (dwarf planet)`), check that the page's URL is in the results, then `WebFetch` that exact URL with a prompt asking for the specific values (infobox rows, or the table rows needed; for long tables such as Caldwell or the globular list, fetch in parts with `offset`). One search per page; a single multi-page query does not reliably return every page. No subagents. The shell can't reach Wikipedia. A value that can't be read from the fetched page stays as it is and goes in the report as unchecked.
 2. **Change a value only when the page clearly states a different one.** Keep the units shown above. If a page is unreachable or garbled, keep the existing value and say so in the report.
-3a. **Stars and galaxies rotate.** The star and galaxy lists are too long for one run (about 1,600 page reads in total). Each run checks the whole solar-system/Caldwell/globular set plus one third of the stars and galaxies: quarter = (month-1)/3 → January and the next January take rows where `index % 3 == quarter % 3` of `stars_targets` ordered by magnitude. Rows in `stars.csv` / `galaxies.csv` that are missing (never fetched) go first, then the oldest. Rows with no usable page stay out of the CSV.
+3a. **Stars and galaxies: do all rows.** Check every row of `stars.csv` and `galaxies.csv`, and try again every target that has no row yet (`stars_targets`: the 493 proper-named stars; `galaxies`: those brighter than magnitude 11 whose distance isn't from another table). Rows with no usable page stay out of the CSV. A WebSearch tool call is limited per turn, so a long run may need several turns; keep going until every row is done.
 3. **Moon counts:** take the number from the lead sentence and copy its "as of" date into `asOf` as "Month YYYY". Set `asOf` for Jupiter and Saturn; other planets can stay without it.
 4. **Orbital elements:** some infoboxes print an epoch date and a JD that disagree. Check this with the "Time of perihelion" line: the mean anomaly M should be about (days from perihelion to epoch) × (mean motion), where mean motion is 0.9856 / a^1.5 °/day. Use the epoch that fits, as a JD number. Angles stay in degrees on the J2000 ecliptic. `n` is the mean motion in °/day when the infobox gives one (keep `null` otherwise).
 5. **Don't add or remove** entries in `moons` (the map draws exactly these 12, in order) or in `minor`, unless the user asked for it. You can add a new body's moon count to `bodies`.
@@ -49,3 +54,11 @@ If the check fails, fix the data, not the check. If it can't be fixed, revert `d
 1. Commit everything with a message that lists each changed value (old → new) and its source page, then push to `main`. GitHub Pages republishes https://marx1980.github.io/NightGlass/ within about a minute.
 2. If the Artifact tool is available, read the artifact `https://claude.ai/artifact/9NkThKpgLWBJRZjtk4WafF`, then publish `dist/page.html` to that same `url`.
 3. Report: what changed (or "no changes"), anything that couldn't be checked, and whether the push and the artifact update succeeded.
+
+## Quarterly moon-count check (April, July, October)
+
+Only these steps; change nothing else.
+
+1. For Jupiter, Saturn, Uranus, Neptune, Pluto and Mars: WebSearch (`allowed_domains: ["en.wikipedia.org"]`, query = page title, e.g. `Moons of Saturn`), then WebFetch that URL and read the count from the lead sentence.
+2. If a count changed, update `bodies.*.moons` in `data/solar.json` and set `asOf` ("Month YYYY") for Jupiter and Saturn to the date in the lead sentence. Set `checked` to today.
+3. Rebuild and check (`sh tools/build.sh`, `node tools/check.mjs`), commit, push to `main`, and publish `dist/page.html` to the artifact as in "Publish". If no count changed, change nothing and just report "no changes".
