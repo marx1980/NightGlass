@@ -462,15 +462,29 @@ function drawGround(sky) {
     if (pen) ctx.lineTo(q[0], q[1]); else { ctx.moveTo(q[0], q[1]); pen = true; }
   }
   ctx.strokeStyle = "rgba(241,180,92,0.55)"; ctx.lineWidth = 1.2; ctx.stroke();
-  // cardinal points
-  const card = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  // direction markers on the horizon line: ticks every 15°, names for the 8 main points,
+  // and the in-between names (NNE, ENE...) once zoomed in
+  const inView = (q) => q[2] >= 0.1 && q[0] > -20 && q[0] < W + 20 && q[1] > -20 && q[1] < H + 20;
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.75)"; ctx.shadowBlur = 4;
+  ctx.strokeStyle = "rgba(241,180,92,0.85)"; ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  for (let az = 0; az < 360; az += 15) {
+    const q = pt(az, 0); if (!inView(q)) continue;
+    const len = az % 45 === 0 ? 8 : 4;
+    ctx.moveTo(q[0], q[1] - len); ctx.lineTo(q[0], q[1] + len);
+  }
+  ctx.stroke();
   ctx.textAlign = "center";
-  card.forEach((c, i) => {
-    const q = pt(i * 45, -3.2); if (q[2] < 0.1 || q[0] < -20 || q[0] > W + 20 || q[1] < -20 || q[1] > H + 20) return;
-    ctx.font = (c.length === 1 ? "600 16px " : "500 12px ") + uiFont;
-    ctx.fillStyle = c === "N" ? "#ff8a6b" : "rgba(241,180,92,0.9)";
-    ctx.fillText(c, q[0], q[1] + 6);
-  });
+  for (let k = 0; k < 16; k++) {
+    const c = COMPASS[k], minor = k % 2 === 1;
+    if (minor && V.fov >= 70) continue;
+    const q = pt(k * 22.5, 0); if (!inView(q)) continue;
+    ctx.font = (c.length === 1 ? "600 16px " : minor ? "500 11px " : "500 12px ") + uiFont;
+    ctx.fillStyle = c === "N" ? "#ff8a6b" : minor ? "rgba(241,180,92,0.7)" : "rgba(241,180,92,0.95)";
+    ctx.fillText(c, q[0], q[1] + (minor ? 20 : 24));
+  }
+  ctx.restore();
   ctx.textAlign = "left";
 }
 
