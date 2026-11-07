@@ -954,7 +954,6 @@ function updateCard(force) {
   $("s3").textContent = dirTxt(d.az);
   $("fact").textContent = d.fact; $("fact").hidden = !d.fact;
   $("meta").textContent = d.meta; $("meta").hidden = !d.meta;
-  $("unpin").hidden = !pinned;
   $("goBtn").hidden = !o || (goal && goal.t === o.t && goal.i === o.i);
 }
 
@@ -1028,7 +1027,6 @@ function tap(x, y) {
   pinned = best ? { t: best.t, i: best.i } : null;
   dirty = true; updateCard(true);
 }
-$("unpin").onclick = () => { pinned = null; dirty = true; updateCard(true); };
 const cardHead = document.querySelector(".card-head");
 // object card: full, name only, or off (older saved settings map onto these)
 if (!["full", "name", "off"].includes(S.cardMode)) S.cardMode = S.cardHidden ? "off" : S.cardMin ? "name" : "full";

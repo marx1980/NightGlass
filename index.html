@@ -250,9 +250,6 @@ input[type=range] { width: 100%; accent-color: var(--amber); }
         <button class="icon close" id="goBtn" hidden aria-label="Guide me to this object" title="Guide me to this object">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 17-7-4-7 4z"/></svg>
         </button>
-        <button class="icon close" id="unpin" hidden aria-label="Back to crosshair">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-        </button>
         <button class="icon close" id="sizeCard" aria-label="Show name only">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
@@ -1869,7 +1866,6 @@ function updateCard(force) {
   $("s3").textContent = dirTxt(d.az);
   $("fact").textContent = d.fact; $("fact").hidden = !d.fact;
   $("meta").textContent = d.meta; $("meta").hidden = !d.meta;
-  $("unpin").hidden = !pinned;
   $("goBtn").hidden = !o || (goal && goal.t === o.t && goal.i === o.i);
 }
 
@@ -1943,7 +1939,6 @@ function tap(x, y) {
   pinned = best ? { t: best.t, i: best.i } : null;
   dirty = true; updateCard(true);
 }
-$("unpin").onclick = () => { pinned = null; dirty = true; updateCard(true); };
 const cardHead = document.querySelector(".card-head");
 // object card: full, name only, or off (older saved settings map onto these)
 if (!["full", "name", "off"].includes(S.cardMode)) S.cardMode = S.cardHidden ? "off" : S.cardMin ? "name" : "full";
