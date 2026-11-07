@@ -1551,7 +1551,7 @@ function minorMag(H, r, delta, phaseRad) {
   return H + 5 * Math.log10(r * delta) - 2.5 * Math.log10((1 - G) * p1 + G * p2);
 }
 
-/* ---------- Solar System: values from Wikipedia (data/solar.json, refreshed monthly) ---------- */
+/* ---------- Solar System: values from Wikipedia (data/solar.json, refreshed quarterly) ---------- */
 const WIKI = SOLAR.bodies, MOONS = SOLAR.moons;
 const MINOR = SOLAR.minor.map((o) => [o.name, o.kind, o.epochJD, o.a, o.e, o.i, o.node, o.peri, o.M, o.n, o.H, o.radiusKm, o.massKg, o.discovered, o.moons, o.periodYr]);
 const MINOR_FACTS = Object.fromEntries(SOLAR.minor.map((o) => [o.name, o.fact]));
