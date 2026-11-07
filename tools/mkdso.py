@@ -7,6 +7,7 @@ def nid(s):  # NGC0224 -> NGC 224
 cald={};
 for r in csv.DictReader(open('data/wikipedia/caldwell.csv')): cald[r['ID']]=r
 glob={r['ID']:float(r['DistLy']) for r in csv.DictReader(open('data/wikipedia/globulars.csv'))}
+wgal={r['ID']:float(r['DistLy']) for r in csv.DictReader(open('data/wikipedia/galaxies.csv',encoding='utf-8')) if r['DistLy']}  # galaxy distances read from each galaxy's Wikipedia article
 KEEP={'G','GGroup','GPair','GTrpl','OCl','GCl','Cl+N','PN','HII','EmN','Neb','RfN','SNR','DrkN','*Ass'}
 NEB={'Cl+N','HII','EmN','Neb','RfN','SNR','DrkN'}
 GREEK={'alf':'α','bet':'β','gam':'γ','del':'δ','eps':'ε','zet':'ζ','eta':'η','tet':'θ','iot':'ι','kap':'κ','lam':'λ','mu.':'μ','nu.':'ν','ksi':'ξ','omi':'ο','pi.':'π','rho':'ρ','sig':'σ','tau':'τ','ups':'υ','phi':'φ','chi':'χ','psi':'ψ','ome':'ω'}
@@ -28,6 +29,7 @@ for r in rows:
     dist=0;ds=0
     if c and c['Dist']: dist=float(c['Dist'])*1000; ds=1
     elif name in glob: dist=glob[name]; ds=1
+    elif name in wgal: dist=wgal[name]; ds=1
     else:
         z=f(r['Redshift']); rv=f(r['RadVel'])
         cz=rv if rv else (z*299792.458 if z else None)

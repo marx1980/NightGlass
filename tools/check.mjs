@@ -22,6 +22,10 @@ ok(D.fields.length >= 4, 'dso.json: deep fields missing');
 ok(D.dso.some((o) => o[2] === 'BH'), 'dso.json: Sagittarius A* missing');
 const MG = JSON.parse(fs.readFileSync('data/mgal.json', 'utf8'));
 ok(Object.keys(MG).length >= 38, 'mgal.json: Messier galaxy shapes missing');
+const SI = JSON.parse(fs.readFileSync('data/sinfo.json', 'utf8'));
+const wstars = SI.filter((r) => r[11]);
+ok(wstars.length >= 60, 'sinfo.json: Wikipedia star values missing (run tools/mkwiki.py)');
+for (const r of wstars) { if (r[11] & 1) ok(r[5] > 0.05 && r[5] < 3000, `HIP ${r[0]}: radius out of range`); if (r[11] & 2) ok(r[6] > 0.05 && r[6] < 400, `HIP ${r[0]}: mass out of range`); }
 const html = fs.readFileSync('index.html', 'utf8');
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 ok(scripts.length >= 3, 'index.html: inline scripts missing');

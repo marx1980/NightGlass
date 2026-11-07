@@ -1018,13 +1018,13 @@ function describe(o) {
   if (o.t === "f") return describeField(o);
   if (o.t === "s") {
     const i = o.i, n = NAMES[i], h = [sH[i * 3], sH[i * 3 + 1], sH[i * 3 + 2]], aa = altaz(h), inf = SINFO[i] || [];
-    const [hip, ly, sp, T, L, R, M, kc, vname, vmin, vmax] = inf;
+    const [hip, ly, sp, T, L, R, M, kc, vname, vmin, vmax, wf = 0] = inf;
     const con = (n && SKY.full[n[2]]) || conAt(h) || "", name = starName(i);
     const desig = n && n[0] && n[1] ? n[1] : "";
     const spec = sp ? sp.replace(/([0-9.])(Iab|Ia|Ib|III|II|IV|V|I)/, "$1 $2") : "";
     const far = ly > 1500, est = (s) => (s === "—" ? s : "≈" + s);
     return { key: "s" + i, kind: (kc >= 0 ? KINDS[kc] : "Star") + (con ? " · " + con : ""), name, alias: [desig, spec].filter(Boolean).join(" · "),
-      a: [["Distance", (far ? "≈" : "") + fmtLy(ly)], ["Size", R ? est(fmtSize(R)) : "—"], ["Mass", M ? est(fmtMass(M)) : "—"]],
+      a: [["Distance", (far ? "≈" : "") + fmtLy(ly)], ["Size", R ? (wf & 1 ? fmtSize(R) : est(fmtSize(R))) : "—"], ["Mass", M ? (wf & 2 ? fmtMass(M) : est(fmtMass(M))) : "—"]],
       s1l: "Brightness", s1: "mag " + st[i * 4 + 2].toFixed(1), alt: aa.alt, az: aa.az,
       fact: (n && FACTS[n[0]]) || (st[i * 4 + 2] < 2 ? "One of the brightest stars in the sky." : ""),
       meta: sentence([T && `Its surface is about ${nf(sig(T - 273, 2), 0)} °C, which looks ${colorWord(T)}`, L && cap(powerTxt(L)),
