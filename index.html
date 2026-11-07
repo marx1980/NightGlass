@@ -2082,7 +2082,7 @@ document.querySelectorAll("#cardModeSeg button").forEach((x) => (x.onclick = () 
 let oriListening = false, gotOri = false, oriTimer = null, wakeLock = null;
 // The phone's own gyro-based stream gives the smooth pose. The compass only corrects its heading, slowly and only while the phone is
 // roughly level (the compass is unreliable and the Euler angles are ill-defined when pointing high), so the view doesn't wander.
-let tgtF = null, tgtU = null, yawOff = null, bigAt = 0, relAt = 0, absAz = null, absAt = 0, yawAt = 0, lastFrameT = 0, lastTh = 0;
+let spikeF = null, spikeN = 0, lastOriT = 0, tgtF = null, tgtU = null, yawOff = null, bigAt = 0, relAt = 0, absAz = null, absAt = 0, yawAt = 0, lastFrameT = 0, lastTh = 0;
 const wrap180 = (d) => ((d + 540) % 360) - 180;
 const azOf = (v) => Math.atan2(v[0], v[1]) / D;
 function screenAngle() { return (screen.orientation && screen.orientation.angle) || window.orientation || 0; }
@@ -2101,6 +2101,16 @@ function onOri(e) {
   if (abs) { absAz = azOf(p.fw); absAt = now; }
   else relAt = now;
   if (abs && now - relAt < 1500) return; // a gyro stream is running: the absolute one only supplies the compass heading
+  // Spike filter: a pose that jumps far faster than a hand can turn is a sensor glitch. Ignore it
+  // unless the new pose holds for several events in a row (then it is real, e.g. a quick flick).
+  if (tgtF) {
+    const dtS = Math.max(0.005, (now - lastOriT) / 1000), jump = Math.acos(Math.max(-1, Math.min(1, dot(tgtF, p.fw)))) / D;
+    if (jump > 12 + 500 * dtS) {
+      if (spikeF && Math.acos(Math.max(-1, Math.min(1, dot(spikeF, p.fw)))) / D < 8) { if (++spikeN >= 4) { spikeF = null; spikeN = 0; } else return; }
+      else { spikeF = p.fw; spikeN = 1; return; }
+    } else { spikeF = null; spikeN = 0; }
+  }
+  lastOriT = now;
   gotOri = true; tgtF = p.fw; tgtU = p.up;
   if (!pF) { pF = p.fw; pU = p.up; }
   if (abs) { yawOff = 0; return; } // absolute-only phone: use its heading as is
@@ -2122,7 +2132,9 @@ function stepOri(now) {
   if (V.mode !== "point" || !tgtF || !pF) { lastFrameT = now; return; }
   const dt = Math.min(0.1, Math.max(0.001, (now - lastFrameT) / 1000)); lastFrameT = now;
   const err = Math.acos(Math.max(-1, Math.min(1, dot(pF, tgtF)))) / D;
-  const k = 1 - Math.exp(-dt / (0.02 + 0.16 * Math.exp(-err)));
+  let k = 1 - Math.exp(-dt / (0.02 + 0.16 * Math.exp(-err)));
+  const maxStep = 300 * dt; // never swing faster than 300°/s, so a late burst of events can't make the view lurch
+  if (err * k > maxStep) k = maxStep / err;
   pF = norm(pF.map((v, i) => v + (tgtF[i] - v) * k)); pU = norm(pU.map((v, i) => v + (tgtU[i] - v) * k));
   const th = (calYaw + (yawOff || 0)) * D;
   F = rotz(pF, th); R = norm(cross(F, rotz(pU, th))); U = cross(R, F);
