@@ -979,7 +979,7 @@ function describeDSO(o) {
   const dist = d[10], est = d[11] === 2, mag = d[8], sizeLy = dist && d[5] ? dist * d[5] / 60 * D : 0;
   const ang = d[5] ? fmtArc(d[5]) + (d[6] && d[6] !== d[5] ? " × " + fmtArc(d[6]) : "") : "";
   return { key: "d" + o.i, kind: type + (con ? " · " + con : ""), name: d[1] || d[0], alias: [d[1] ? d[0] : "", d[14] ? "Caldwell " + d[14] : ""].filter(Boolean).join(" · "),
-    a: [["Distance", dist ? (est ? "≈" : "") + fmtLy(dist) : "unknown"], ["Size", sizeLy >= 1 ? (est ? "≈" : "") + fmtNum(sizeLy) + " ly" : ang ? fmtArc(d[5]) + " wide" : "—"], ["Viewing", viewTxt(mag)]],
+    a: [["Distance", dist ? (est ? "≈" : "") + (d[15] ? fmtLy(dist) + " to " + fmtLy(d[15]) : fmtLy(dist)) : "unknown"], ["Size", sizeLy >= 1 ? (est ? "≈" : "") + fmtNum(sizeLy) + " ly" : ang ? fmtArc(d[5]) + " wide" : "—"], ["Viewing", viewTxt(mag)]],
     s1l: "Brightness", s1: mag != null ? "mag " + mag.toFixed(1) : "—", alt: aa.alt, az: aa.az, fact: DFACT[type] || "",
     meta: sentence([ang && (d[5] >= 25 ? `It spans ${nf(sig(d[5] / 31, 2), 1)} times the width of the full Moon` : `It looks ${ang} across`),
       d[13] ? `It is moving ${d[13] > 0 ? "away from" : "towards"} us at ${nf(Math.abs(d[13]), 0)} km/s` : "", est && "Its distance is estimated from that speed, so treat it as rough",

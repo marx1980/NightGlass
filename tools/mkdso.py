@@ -7,7 +7,8 @@ def nid(s):  # NGC0224 -> NGC 224
 cald={};
 for r in csv.DictReader(open('data/wikipedia/caldwell.csv')): cald[r['ID']]=r
 glob={r['ID']:float(r['DistLy']) for r in csv.DictReader(open('data/wikipedia/globulars.csv'))}
-wgal={r['ID']:float(r['DistLy']) for r in csv.DictReader(open('data/wikipedia/galaxies.csv',encoding='utf-8')) if r['DistLy']}  # galaxy distances read from each galaxy's Wikipedia article
+wgal={r['ID']:float(r['DistLy']) for r in csv.DictReader(open('data/wikipedia/galaxies.csv',encoding='utf-8')) if r['DistLy']}  # galaxy distances read from each galaxy's Wikipedia article (or an assessed source)
+wgmax={r['ID']:float(r['DistLyMax']) for r in csv.DictReader(open('data/wikipedia/galaxies.csv',encoding='utf-8')) if r.get('DistLyMax')}  # optional upper end of a published range
 KEEP={'G','GGroup','GPair','GTrpl','OCl','GCl','Cl+N','PN','HII','EmN','Neb','RfN','SNR','DrkN','*Ass'}
 NEB={'Cl+N','HII','EmN','Neb','RfN','SNR','DrkN'}
 GREEK={'alf':'α','bet':'β','gam':'γ','del':'δ','eps':'ε','zet':'ζ','eta':'η','tet':'θ','iot':'ι','kap':'κ','lam':'λ','mu.':'μ','nu.':'ν','ksi':'ξ','omi':'ο','pi.':'π','rho':'ρ','sig':'σ','tau':'τ','ups':'υ','phi':'φ','chi':'χ','psi':'ψ','ome':'ω'}
@@ -39,7 +40,7 @@ for r in rows:
     if ds==2: src['z']+=1
     rv=f(r['RadVel']) or ((f(r['Redshift']) or 0)*299792.458 or None)
     out.append([name,common,r['Type'],round(hms(r['RA']),4),round(dms(r['Dec']),4),round(maj,2),round(f(r['MinAx']) or 0,2),int(f(r['PosAng']) or -1),
-                mag if mag is not None else None,r['Const'],int(round(dist)) if dist else 0,ds,r['Hubble'],int(round(rv)) if rv else 0,int(c['C']) if c else 0])
+                mag if mag is not None else None,r['Const'],int(round(dist)) if dist else 0,ds,r['Hubble'],int(round(rv)) if rv else 0,int(c['C']) if c else 0,int(round(wgmax[name])) if (ds==1 and name in wgmax) else 0])
 # the Milky Way's central black hole (Sagittarius A*): J2000 17h45m40.04s -29d00m28.1s, about 26,700 ly away
 out.append(['Sgr A*','Sagittarius A*','BH',266.41684,-29.00781,0,0,-1,None,'Sgr',26700,1,'',0,0])
 out.sort(key=lambda x:(x[8] if x[8] is not None else 14))
